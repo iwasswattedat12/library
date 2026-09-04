@@ -205,17 +205,6 @@ local function ensureScreenGui()
     sg.DisplayOrder = 999999
     sg.Parent = getGuiParent()
 
-    local overlay = Instance.new("Frame")
-    overlay.Name = "DarkenOverlay"
-    overlay.Size = UDim2.new(1, 400, 1, 400)
-    overlay.Position = UDim2.new(0, -200, 0, -200)
-    overlay.BackgroundColor3 = Palette.BlackOverlay
-    overlay.BackgroundTransparency = 0.3
-    overlay.BorderSizePixel = 0
-    overlay.ZIndex = 1
-    overlay.Active = false
-    overlay.Parent = sg
-
     local notifFrame = Instance.new("Frame")
     notifFrame.Name = "Notifications"
     notifFrame.Size = UDim2.new(0, 310, 1, -60)
@@ -266,7 +255,6 @@ local function ensureScreenGui()
     end)
 
     HoodUI.ScreenGui = sg
-    HoodUI.DarkenOverlay = overlay
     HoodUI.NotifyContainer = notifFrame
     HoodUI.WatermarkBtn = watermark
 
@@ -289,20 +277,6 @@ end
 function HoodUI:SetGuiOpen(isOpen: boolean)
     self.IsGuiOpen = isOpen
     ensureScreenGui()
-
-    if self.DarkenOverlay then
-        if isOpen then
-            self.DarkenOverlay.Visible = true
-            tween(self.DarkenOverlay, 0.2, { BackgroundTransparency = 0.3 })
-        else
-            local fade = tween(self.DarkenOverlay, 0.18, { BackgroundTransparency = 1 })
-            fade.Completed:Connect(function()
-                if not self.IsGuiOpen and self.DarkenOverlay then
-                    self.DarkenOverlay.Visible = false
-                end
-            end)
-        end
-    end
 
     for _, win in ipairs(self.Windows) do
         if win.Frame then
