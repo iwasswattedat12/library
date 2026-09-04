@@ -272,7 +272,8 @@ local function ensureScreenGui()
 
     if not HoodUI._inputBound then
         HoodUI._inputBound = true
-        UserInputService.InputBegan:Connect(function(input)
+        UserInputService.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
             if input.KeyCode == HoodUI.ToggleKey then
                 local focused = UserInputService:GetFocusedTextBox()
                 if not focused then
@@ -1279,11 +1280,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local function fireCallback(val: string)
                 if options.Callback then
-                    local argTable = { val, [1] = val }
-                    setmetatable(argTable, {
-                        __tostring = function() return val end
-                    })
-                    pcall(options.Callback, argTable)
+                    pcall(options.Callback, val)
                 end
             end
 
