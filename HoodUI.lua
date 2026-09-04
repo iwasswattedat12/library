@@ -29,18 +29,70 @@ local function getGuiParent(): Instance
     return LocalPlayer:WaitForChild("PlayerGui")
 end
 
+local Themes = {
+    ["default"] = {
+        Accent = Color3.fromRGB(250, 250, 255),
+        AccentSecondary = Color3.fromRGB(180, 182, 198),
+        PillOn = Color3.fromRGB(245, 246, 252),
+        KnobOn = Color3.fromRGB(15, 16, 22),
+        CardActiveBorder = Color3.fromRGB(55, 58, 75),
+    },
+    ["white"] = {
+        Accent = Color3.fromRGB(250, 250, 255),
+        AccentSecondary = Color3.fromRGB(180, 182, 198),
+        PillOn = Color3.fromRGB(245, 246, 252),
+        KnobOn = Color3.fromRGB(15, 16, 22),
+        CardActiveBorder = Color3.fromRGB(55, 58, 75),
+    },
+    ["ocean"] = {
+        Accent = Color3.fromRGB(0, 140, 255),
+        AccentSecondary = Color3.fromRGB(0, 105, 210),
+        PillOn = Color3.fromRGB(0, 140, 255),
+        KnobOn = Color3.fromRGB(255, 255, 255),
+        CardActiveBorder = Color3.fromRGB(0, 120, 230),
+    },
+    ["emerald"] = {
+        Accent = Color3.fromRGB(36, 212, 138),
+        AccentSecondary = Color3.fromRGB(26, 170, 110),
+        PillOn = Color3.fromRGB(36, 212, 138),
+        KnobOn = Color3.fromRGB(12, 28, 20),
+        CardActiveBorder = Color3.fromRGB(30, 180, 115),
+    },
+    ["amethyst"] = {
+        Accent = Color3.fromRGB(168, 85, 247),
+        AccentSecondary = Color3.fromRGB(135, 60, 210),
+        PillOn = Color3.fromRGB(168, 85, 247),
+        KnobOn = Color3.fromRGB(255, 255, 255),
+        CardActiveBorder = Color3.fromRGB(145, 70, 220),
+    },
+    ["ruby"] = {
+        Accent = Color3.fromRGB(244, 63, 94),
+        AccentSecondary = Color3.fromRGB(200, 45, 75),
+        PillOn = Color3.fromRGB(244, 63, 94),
+        KnobOn = Color3.fromRGB(255, 255, 255),
+        CardActiveBorder = Color3.fromRGB(220, 50, 80),
+    },
+    ["midnight"] = {
+        Accent = Color3.fromRGB(56, 189, 248),
+        AccentSecondary = Color3.fromRGB(35, 140, 190),
+        PillOn = Color3.fromRGB(56, 189, 248),
+        KnobOn = Color3.fromRGB(10, 20, 30),
+        CardActiveBorder = Color3.fromRGB(45, 150, 200),
+    },
+}
+
 local Palette = {
     BlackOverlay = Color3.fromRGB(0, 0, 0),
     WindowBg = Color3.fromRGB(13, 14, 18),
     WindowBorder = Color3.fromRGB(32, 34, 44),
     HeaderBg = Color3.fromRGB(16, 17, 22),
-    HeaderBorder = Color3.fromRGB(28, 29, 38),
+    HeaderBorder = Color3.fromRGB(26, 27, 36),
     SidebarBg = Color3.fromRGB(10, 11, 15),
     SidebarBorder = Color3.fromRGB(24, 25, 34),
     CardBg = Color3.fromRGB(18, 19, 25),
     CardHover = Color3.fromRGB(25, 27, 36),
-    CardBorder = Color3.fromRGB(30, 32, 42),
-    CardActive = Color3.fromRGB(24, 26, 35),
+    CardBorder = Color3.fromRGB(28, 30, 40),
+    CardActive = Color3.fromRGB(23, 25, 34),
     CardActiveBorder = Color3.fromRGB(55, 58, 75),
     InputBg = Color3.fromRGB(11, 12, 16),
     InputBorder = Color3.fromRGB(30, 32, 42),
@@ -109,8 +161,35 @@ local HoodUI = {
     WatermarkBtn = nil :: GuiObject?,
     IsGuiOpen = true,
     ToggleKey = Enum.KeyCode.RightControl,
+    CurrentTheme = "default",
+    ThemeListeners = {},
     _inputBound = false,
 }
+
+function HoodUI:GetThemeData()
+    local name = string.lower(self.CurrentTheme or "default")
+    return Themes[name] or Themes["default"]
+end
+
+function HoodUI:SetTheme(themeName: string)
+    if typeof(themeName) == "table" then
+        themeName = themeName[1] or "default"
+    end
+    themeName = string.lower(tostring(themeName or "default"))
+    if not Themes[themeName] then
+        themeName = "default"
+    end
+    self.CurrentTheme = themeName
+    local theme = Themes[themeName]
+
+    Palette.PillOn = theme.PillOn
+    Palette.KnobOn = theme.KnobOn
+    Palette.CardActiveBorder = theme.CardActiveBorder
+
+    for _, listener in ipairs(self.ThemeListeners) do
+        pcall(listener, theme)
+    end
+end
 
 local function ensureScreenGui()
     if HoodUI.ScreenGui and HoodUI.ScreenGui.Parent then return HoodUI.ScreenGui end
@@ -296,7 +375,7 @@ function HoodUI:Notify(options: { Title: string?, Content: string?, Duration: nu
     local bar = Instance.new("Frame")
     bar.Size = UDim2.new(1, -6, 0, 2)
     bar.Position = UDim2.new(0, 3, 1, -3)
-    bar.BackgroundColor3 = Palette.AccentWhite
+    bar.BackgroundColor3 = HoodUI:GetThemeData().Accent
     bar.BorderSizePixel = 0
     bar.ZIndex = 102
     bar.Parent = card
@@ -319,15 +398,19 @@ function HoodUI:Notify(options: { Title: string?, Content: string?, Duration: nu
     end)
 end
 
-function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?, Width: number?, Height: number? })
+function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?, Theme: string?, Width: number?, Height: number? })
     ensureScreenGui()
     options = options or {}
 
     local toggleKey = options.ToggleKey or HoodUI.ToggleKey or Enum.KeyCode.RightControl
     HoodUI:SetToggleKey(toggleKey)
 
-    local winWidth = options.Width or 750
-    local winHeight = options.Height or 470
+    if options.Theme then
+        HoodUI:SetTheme(options.Theme)
+    end
+
+    local winWidth = options.Width or 590
+    local winHeight = options.Height or 390
 
     local winFrame = Instance.new("Frame")
     winFrame.Name = "HoodWindow"
@@ -336,6 +419,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
     winFrame.BackgroundColor3 = Palette.WindowBg
     winFrame.BackgroundTransparency = 0.12
     winFrame.BorderSizePixel = 0
+    winFrame.ClipsDescendants = true
     winFrame.ZIndex = 10
     winFrame.Parent = HoodUI.ScreenGui
 
@@ -350,7 +434,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
     local header = Instance.new("Frame")
     header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 50)
+    header.Size = UDim2.new(1, 0, 0, 48)
     header.BackgroundColor3 = Palette.HeaderBg
     header.BackgroundTransparency = 0.12
     header.BorderSizePixel = 0
@@ -370,25 +454,25 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
     headerLine.Parent = header
 
     local logoLabel = Instance.new("TextLabel")
-    logoLabel.Size = UDim2.new(0, 54, 0, 24)
-    logoLabel.Position = UDim2.new(0, 18, 0.5, -12)
+    logoLabel.Size = UDim2.new(0, 52, 0, 24)
+    logoLabel.Position = UDim2.new(0, 16, 0.5, -12)
     logoLabel.BackgroundTransparency = 1
-    logoLabel.Text = options.Name or "VAPE"
+    logoLabel.Text = options.Name or "HOOD"
     logoLabel.TextColor3 = Palette.TextPrimary
-    logoLabel.TextSize = 16
+    logoLabel.TextSize = 15
     logoLabel.Font = Enum.Font.GothamBold
     logoLabel.TextXAlignment = Enum.TextXAlignment.Left
     logoLabel.ZIndex = 13
     logoLabel.Parent = header
 
     local badge = Instance.new("TextLabel")
-    badge.Size = UDim2.new(0, 26, 0, 18)
-    badge.Position = UDim2.new(0, 74, 0.5, -9)
+    badge.Size = UDim2.new(0, 24, 0, 18)
+    badge.Position = UDim2.new(0, 70, 0.5, -9)
     badge.BackgroundColor3 = Palette.CardBorder
     badge.BackgroundTransparency = 0.2
     badge.Text = "v4"
     badge.TextColor3 = Palette.TextSecondary
-    badge.TextSize = 11
+    badge.TextSize = 10
     badge.Font = Enum.Font.GothamBold
     badge.ZIndex = 13
     badge.Parent = header
@@ -398,8 +482,8 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
     badgeCorner.Parent = badge
 
     local homeBtn = Instance.new("Frame")
-    homeBtn.Size = UDim2.new(0, 74, 0, 28)
-    homeBtn.Position = UDim2.new(0, 112, 0.5, -14)
+    homeBtn.Size = UDim2.new(0, 68, 0, 26)
+    homeBtn.Position = UDim2.new(0, 104, 0.5, -13)
     homeBtn.BackgroundColor3 = Palette.CardBg
     homeBtn.BackgroundTransparency = 0.2
     homeBtn.BorderSizePixel = 0
@@ -424,7 +508,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
     closeBtn.Size = UDim2.new(0, 24, 0, 24)
     closeBtn.Position = UDim2.new(1, -34, 0.5, -12)
     closeBtn.BackgroundColor3 = Palette.CardBg
-    closeBtn.BackgroundTransparency = 0.2
+    closeBtn.BackgroundTransparency = 0.25
     closeBtn.BorderSizePixel = 0
     closeBtn.Text = "X"
     closeBtn.TextColor3 = Palette.TextMuted
@@ -451,7 +535,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
     minBtn.Size = UDim2.new(0, 24, 0, 24)
     minBtn.Position = UDim2.new(1, -64, 0.5, -12)
     minBtn.BackgroundColor3 = Palette.CardBg
-    minBtn.BackgroundTransparency = 0.2
+    minBtn.BackgroundTransparency = 0.25
     minBtn.BorderSizePixel = 0
     minBtn.Text = "-"
     minBtn.TextColor3 = Palette.TextMuted
@@ -464,33 +548,41 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
     minCorner.CornerRadius = UDim.new(0, 4)
     minCorner.Parent = minBtn
 
+    local body = Instance.new("Frame")
+    body.Name = "Body"
+    body.Size = UDim2.new(1, 0, 1, -48)
+    body.Position = UDim2.new(0, 0, 0, 48)
+    body.BackgroundTransparency = 1
+    body.ClipsDescendants = true
+    body.ZIndex = 11
+    body.Parent = winFrame
+
     local isMinimized = false
     minBtn.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
         if isMinimized then
-            tween(winFrame, 0.2, { Size = UDim2.new(0, winWidth, 0, 50) })
+            body.Visible = false
+            tween(winFrame, 0.2, { Size = UDim2.new(0, winWidth, 0, 48) })
         else
             tween(winFrame, 0.2, { Size = UDim2.new(0, winWidth, 0, winHeight) })
+            task.delay(0.08, function()
+                if not isMinimized then
+                    body.Visible = true
+                end
+            end)
         end
     end)
 
     makeDraggable(winFrame, header)
 
-    local body = Instance.new("Frame")
-    body.Name = "Body"
-    body.Size = UDim2.new(1, 0, 1, -50)
-    body.Position = UDim2.new(0, 0, 0, 50)
-    body.BackgroundTransparency = 1
-    body.ZIndex = 11
-    body.Parent = winFrame
-
     local sidebar = Instance.new("Frame")
     sidebar.Name = "Sidebar"
-    sidebar.Size = UDim2.new(0, 160, 1, 0)
+    sidebar.Size = UDim2.new(0, 135, 1, 0)
     sidebar.Position = UDim2.new(0, 0, 0, 0)
     sidebar.BackgroundColor3 = Palette.SidebarBg
     sidebar.BackgroundTransparency = 0.15
     sidebar.BorderSizePixel = 0
+    sidebar.ClipsDescendants = true
     sidebar.ZIndex = 11
     sidebar.Parent = body
 
@@ -508,8 +600,8 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
     local catList = Instance.new("ScrollingFrame")
     catList.Name = "CategoryList"
-    catList.Size = UDim2.new(1, -16, 1, -70)
-    catList.Position = UDim2.new(0, 8, 0, 10)
+    catList.Size = UDim2.new(1, -12, 1, -48)
+    catList.Position = UDim2.new(0, 6, 0, 8)
     catList.BackgroundTransparency = 1
     catList.BorderSizePixel = 0
     catList.ScrollBarThickness = 0
@@ -523,50 +615,50 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
     catLayout.Padding = UDim.new(0, 4)
     catLayout.Parent = catList
 
-    local sideBottom = Instance.new("Frame")
-    sideBottom.Name = "SideBottomGrid"
-    sideBottom.Size = UDim2.new(1, -16, 0, 48)
-    sideBottom.Position = UDim2.new(0, 8, 1, -56)
-    sideBottom.BackgroundTransparency = 1
-    sideBottom.ZIndex = 12
-    sideBottom.Parent = sidebar
+    local sideFooter = Instance.new("Frame")
+    sideFooter.Name = "SideFooter"
+    sideFooter.Size = UDim2.new(1, -12, 0, 30)
+    sideFooter.Position = UDim2.new(0, 6, 1, -36)
+    sideFooter.BackgroundTransparency = 1
+    sideFooter.ClipsDescendants = true
+    sideFooter.ZIndex = 12
+    sideFooter.Parent = sidebar
 
-    local bottomGrid = Instance.new("UIGridLayout")
-    bottomGrid.CellSize = UDim2.new(0, 32, 0, 22)
-    bottomGrid.CellPadding = UDim2.new(0, 5, 0, 4)
-    bottomGrid.SortOrder = Enum.SortOrder.LayoutOrder
-    bottomGrid.Parent = sideBottom
+    local themeBtn = Instance.new("TextButton")
+    themeBtn.Size = UDim2.new(1, 0, 1, 0)
+    themeBtn.BackgroundColor3 = Palette.CardBg
+    themeBtn.BackgroundTransparency = 0.25
+    themeBtn.BorderSizePixel = 0
+    themeBtn.Text = "THEME"
+    themeBtn.TextColor3 = Palette.TextDim
+    themeBtn.TextSize = 10
+    themeBtn.Font = Enum.Font.GothamBold
+    themeBtn.ZIndex = 13
+    themeBtn.Parent = sideFooter
 
-    local miniIcons = { "HUD", "CFG", "KEY", "SET" }
-    for i, iconText in ipairs(miniIcons) do
-        local miniBtn = Instance.new("TextButton")
-        miniBtn.BackgroundColor3 = Palette.CardBg
-        miniBtn.BackgroundTransparency = 0.25
-        miniBtn.BorderSizePixel = 0
-        miniBtn.Text = iconText
-        miniBtn.TextColor3 = Palette.TextDim
-        miniBtn.TextSize = 9
-        miniBtn.Font = Enum.Font.GothamBold
-        miniBtn.ZIndex = 13
-        miniBtn.Parent = sideBottom
+    local tfCorner = Instance.new("UICorner")
+    tfCorner.CornerRadius = UDim.new(0, 6)
+    tfCorner.Parent = themeBtn
 
-        local mCorner = Instance.new("UICorner")
-        mCorner.CornerRadius = UDim.new(0, 4)
-        mCorner.Parent = miniBtn
-
-        miniBtn.MouseEnter:Connect(function()
-            tween(miniBtn, 0.15, { TextColor3 = Palette.TextPrimary, BackgroundTransparency = 0.1 })
-        end)
-        miniBtn.MouseLeave:Connect(function()
-            tween(miniBtn, 0.15, { TextColor3 = Palette.TextDim, BackgroundTransparency = 0.25 })
-        end)
-    end
+    local themeList = { "default", "ocean", "emerald", "amethyst", "ruby", "midnight" }
+    local currentThemeIdx = 1
+    themeBtn.MouseButton1Click:Connect(function()
+        currentThemeIdx = currentThemeIdx + 1
+        if currentThemeIdx > #themeList then currentThemeIdx = 1 end
+        HoodUI:SetTheme(themeList[currentThemeIdx])
+        HoodUI:Notify({
+            Title = "Theme Changed",
+            Content = "Accent switched to " .. themeList[currentThemeIdx]:upper(),
+            Duration = 2
+        })
+    end)
 
     local contentArea = Instance.new("Frame")
     contentArea.Name = "ContentArea"
-    contentArea.Size = UDim2.new(1, -172, 1, -12)
-    contentArea.Position = UDim2.new(0, 166, 0, 6)
+    contentArea.Size = UDim2.new(1, -145, 1, -12)
+    contentArea.Position = UDim2.new(0, 140, 0, 6)
     contentArea.BackgroundTransparency = 1
+    contentArea.ClipsDescendants = true
     contentArea.ZIndex = 11
     contentArea.Parent = body
 
@@ -602,13 +694,13 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
         local tabBtn = Instance.new("TextButton")
         tabBtn.Name = tabName .. "_Btn"
-        tabBtn.Size = UDim2.new(1, 0, 0, 36)
+        tabBtn.Size = UDim2.new(1, 0, 0, 34)
         tabBtn.BackgroundColor3 = Palette.SidebarBg
         tabBtn.BackgroundTransparency = 1
         tabBtn.BorderSizePixel = 0
         tabBtn.Text = "   " .. tabName
         tabBtn.TextColor3 = Palette.TextMuted
-        tabBtn.TextSize = 13
+        tabBtn.TextSize = 12
         tabBtn.Font = Enum.Font.GothamMedium
         tabBtn.TextXAlignment = Enum.TextXAlignment.Left
         tabBtn.AutoButtonColor = false
@@ -621,8 +713,8 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
         local activeBar = Instance.new("Frame")
         activeBar.Size = UDim2.new(0, 16, 0, 2)
-        activeBar.Position = UDim2.new(0, 12, 1, -3)
-        activeBar.BackgroundColor3 = Palette.AccentWhite
+        activeBar.Position = UDim2.new(0, 10, 1, -3)
+        activeBar.BackgroundColor3 = HoodUI:GetThemeData().Accent
         activeBar.BorderSizePixel = 0
         activeBar.Visible = false
         activeBar.ZIndex = 14
@@ -631,6 +723,12 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
         local barCorner = Instance.new("UICorner")
         barCorner.CornerRadius = UDim.new(1, 0)
         barCorner.Parent = activeBar
+
+        table.insert(HoodUI.ThemeListeners, function(theme)
+            if activeBar and activeBar.Parent then
+                activeBar.BackgroundColor3 = theme.Accent
+            end
+        end)
 
         local TabObj = {
             Name = tabName,
@@ -641,18 +739,34 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
         }
 
         local function selectTab()
-            for _, other in ipairs(WindowObj.Tabs) do
-                other.Page.Visible = false
-                other.ActiveBar.Visible = false
-                other.Button.TextColor3 = Palette.TextMuted
-                other.Button.BackgroundTransparency = 1
+            if WindowObj.ActiveTab == TabObj then return end
+
+            local oldTab = WindowObj.ActiveTab
+            if oldTab and oldTab.Page then
+                tween(oldTab.Page, 0.12, { Position = UDim2.new(0, 3, 0, -8) })
+                task.delay(0.12, function()
+                    if WindowObj.ActiveTab ~= oldTab then
+                        oldTab.Page.Visible = false
+                    end
+                end)
+                oldTab.ActiveBar.Visible = false
+                oldTab.Button.TextColor3 = Palette.TextMuted
+                oldTab.Button.BackgroundTransparency = 1
             end
+
+            WindowObj.ActiveTab = TabObj
+            page.Position = UDim2.new(0, 3, 0, 10)
             page.Visible = true
+            tween(page, 0.2, { Position = UDim2.new(0, 3, 0, 2) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
             activeBar.Visible = true
+            activeBar.BackgroundColor3 = HoodUI:GetThemeData().Accent
+            activeBar.Size = UDim2.new(0, 4, 0, 2)
+            tween(activeBar, 0.22, { Size = UDim2.new(0, 18, 0, 2) })
+
             tabBtn.TextColor3 = Palette.TextPrimary
             tabBtn.BackgroundColor3 = Palette.CardBg
             tabBtn.BackgroundTransparency = 0.2
-            WindowObj.ActiveTab = TabObj
         end
 
         tabBtn.MouseButton1Click:Connect(selectTab)
@@ -666,7 +780,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
         function TabObj:CreateSection(name: string)
             local sec = Instance.new("Frame")
             sec.Name = "Section"
-            sec.Size = UDim2.new(1, 0, 0, 22)
+            sec.Size = UDim2.new(1, 0, 0, 20)
             sec.BackgroundTransparency = 1
             sec.ZIndex = 13
             sec.Parent = page
@@ -692,7 +806,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local modCard = Instance.new("Frame")
             modCard.Name = options.Name .. "_Card"
-            modCard.Size = UDim2.new(1, 0, 0, 44)
+            modCard.Size = UDim2.new(1, 0, 0, 42)
             modCard.BackgroundColor3 = state and Palette.CardActive or Palette.CardBg
             modCard.BackgroundTransparency = 0.18
             modCard.BorderSizePixel = 0
@@ -705,13 +819,13 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local cardStroke = Instance.new("UIStroke")
             cardStroke.Thickness = 1
-            cardStroke.Color = state and Palette.CardActiveBorder or Palette.CardBorder
+            cardStroke.Color = state and HoodUI:GetThemeData().CardActiveBorder or Palette.CardBorder
             cardStroke.Parent = modCard
 
             local dot = Instance.new("Frame")
             dot.Size = UDim2.new(0, 6, 0, 6)
             dot.Position = UDim2.new(0, 12, 0.5, -3)
-            dot.BackgroundColor3 = state and Palette.AccentWhite or Palette.TextDim
+            dot.BackgroundColor3 = state and HoodUI:GetThemeData().Accent or Palette.TextDim
             dot.BorderSizePixel = 0
             dot.ZIndex = 14
             dot.Parent = modCard
@@ -721,8 +835,8 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             dotCorner.Parent = dot
 
             local nameLabel = Instance.new("TextLabel")
-            nameLabel.Size = UDim2.new(1, -120, 0, options.Subtitle and 18 or 44)
-            nameLabel.Position = UDim2.new(0, 26, 0, options.Subtitle and 4 or 0)
+            nameLabel.Size = UDim2.new(1, -115, 0, options.Subtitle and 18 or 42)
+            nameLabel.Position = UDim2.new(0, 26, 0, options.Subtitle and 3 or 0)
             nameLabel.BackgroundTransparency = 1
             nameLabel.Text = options.Name
             nameLabel.TextColor3 = state and Palette.TextPrimary or Palette.TextSecondary
@@ -734,12 +848,12 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             if options.Subtitle then
                 local sub = Instance.new("TextLabel")
-                sub.Size = UDim2.new(1, -120, 0, 16)
-                sub.Position = UDim2.new(0, 26, 0, 22)
+                sub.Size = UDim2.new(1, -115, 0, 15)
+                sub.Position = UDim2.new(0, 26, 0, 21)
                 sub.BackgroundTransparency = 1
                 sub.Text = options.Subtitle
                 sub.TextColor3 = Palette.TextMuted
-                sub.TextSize = 11
+                sub.TextSize = 10
                 sub.Font = Enum.Font.Gotham
                 sub.TextXAlignment = Enum.TextXAlignment.Left
                 sub.ZIndex = 14
@@ -748,8 +862,8 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local pill = Instance.new("Frame")
             pill.Size = UDim2.new(0, 36, 0, 18)
-            pill.Position = UDim2.new(1, -72, 0.5, -9)
-            pill.BackgroundColor3 = state and Palette.PillOn or Palette.PillOff
+            pill.Position = UDim2.new(1, -68, 0.5, -9)
+            pill.BackgroundColor3 = state and HoodUI:GetThemeData().PillOn or Palette.PillOff
             pill.BorderSizePixel = 0
             pill.ZIndex = 14
             pill.Parent = modCard
@@ -760,13 +874,13 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local pillStroke = Instance.new("UIStroke")
             pillStroke.Thickness = 1
-            pillStroke.Color = state and Palette.PillOn or Palette.PillOffBorder
+            pillStroke.Color = state and HoodUI:GetThemeData().PillOn or Palette.PillOffBorder
             pillStroke.Parent = pill
 
             local knob = Instance.new("Frame")
             knob.Size = UDim2.new(0, 12, 0, 12)
             knob.Position = state and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
-            knob.BackgroundColor3 = state and Palette.KnobOn or Palette.KnobOff
+            knob.BackgroundColor3 = state and HoodUI:GetThemeData().KnobOn or Palette.KnobOff
             knob.BorderSizePixel = 0
             knob.ZIndex = 15
             knob.Parent = pill
@@ -776,18 +890,18 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             knobCorner.Parent = knob
 
             local dotsBtn = Instance.new("TextButton")
-            dotsBtn.Size = UDim2.new(0, 22, 0, 24)
-            dotsBtn.Position = UDim2.new(1, -30, 0.5, -12)
+            dotsBtn.Size = UDim2.new(0, 20, 0, 24)
+            dotsBtn.Position = UDim2.new(1, -26, 0.5, -12)
             dotsBtn.BackgroundTransparency = 1
             dotsBtn.Text = ":"
             dotsBtn.TextColor3 = Palette.TextDim
-            dotsBtn.TextSize = 15
+            dotsBtn.TextSize = 14
             dotsBtn.Font = Enum.Font.GothamBold
             dotsBtn.ZIndex = 14
             dotsBtn.Parent = modCard
 
             local hit = Instance.new("TextButton")
-            hit.Size = UDim2.new(1, -34, 1, 0)
+            hit.Size = UDim2.new(1, -30, 1, 0)
             hit.BackgroundTransparency = 1
             hit.Text = ""
             hit.ZIndex = 16
@@ -797,14 +911,15 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
                 state = val
                 if options.Flag then HoodUI.Flags[options.Flag] = state end
 
+                local theme = HoodUI:GetThemeData()
                 if state then
                     tween(modCard, 0.18, { BackgroundColor3 = Palette.CardActive })
-                    tween(cardStroke, 0.18, { Color = Palette.CardActiveBorder })
-                    tween(dot, 0.18, { BackgroundColor3 = Palette.AccentWhite })
+                    tween(cardStroke, 0.18, { Color = theme.CardActiveBorder })
+                    tween(dot, 0.18, { BackgroundColor3 = theme.Accent })
                     tween(nameLabel, 0.18, { TextColor3 = Palette.TextPrimary })
-                    tween(pill, 0.18, { BackgroundColor3 = Palette.PillOn })
-                    tween(pillStroke, 0.18, { Color = Palette.PillOn })
-                    tween(knob, 0.18, { Position = UDim2.new(1, -15, 0.5, -6), BackgroundColor3 = Palette.KnobOn })
+                    tween(pill, 0.18, { BackgroundColor3 = theme.PillOn })
+                    tween(pillStroke, 0.18, { Color = theme.PillOn })
+                    tween(knob, 0.18, { Position = UDim2.new(1, -15, 0.5, -6), BackgroundColor3 = theme.KnobOn })
                 else
                     tween(modCard, 0.18, { BackgroundColor3 = Palette.CardBg })
                     tween(cardStroke, 0.18, { Color = Palette.CardBorder })
@@ -824,6 +939,16 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
                 updateToggle(not state)
             end)
 
+            table.insert(HoodUI.ThemeListeners, function(theme)
+                if state and modCard and modCard.Parent then
+                    cardStroke.Color = theme.CardActiveBorder
+                    dot.BackgroundColor3 = theme.Accent
+                    pill.BackgroundColor3 = theme.PillOn
+                    pillStroke.Color = theme.PillOn
+                    knob.BackgroundColor3 = theme.KnobOn
+                end
+            end)
+
             local ToggleObj = {
                 Set = function(self, val: boolean)
                     updateToggle(val)
@@ -837,7 +962,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
         function TabObj:CreateButton(options: { Name: string, Callback: () -> () })
             local btnCard = Instance.new("TextButton")
             btnCard.Name = options.Name .. "_Btn"
-            btnCard.Size = UDim2.new(1, 0, 0, 38)
+            btnCard.Size = UDim2.new(1, 0, 0, 36)
             btnCard.BackgroundColor3 = Palette.CardBg
             btnCard.BackgroundTransparency = 0.18
             btnCard.BorderSizePixel = 0
@@ -869,7 +994,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local arrow = Instance.new("TextLabel")
             arrow.Size = UDim2.new(0, 20, 1, 0)
-            arrow.Position = UDim2.new(1, -28, 0, 0)
+            arrow.Position = UDim2.new(1, -26, 0, 0)
             arrow.BackgroundTransparency = 1
             arrow.Text = ">"
             arrow.TextColor3 = Palette.TextDim
@@ -887,7 +1012,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
                 tween(arrow, 0.15, { TextColor3 = Palette.TextDim })
             end)
             btnCard.MouseButton1Click:Connect(function()
-                tween(btnCard, 0.1, { BackgroundColor3 = Palette.CardActiveBorder })
+                tween(btnCard, 0.1, { BackgroundColor3 = HoodUI:GetThemeData().CardActiveBorder })
                 task.delay(0.12, function()
                     tween(btnCard, 0.15, { BackgroundColor3 = Palette.CardBg })
                 end)
@@ -909,7 +1034,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local sliderCard = Instance.new("Frame")
             sliderCard.Name = options.Name .. "_Slider"
-            sliderCard.Size = UDim2.new(1, 0, 0, 52)
+            sliderCard.Size = UDim2.new(1, 0, 0, 50)
             sliderCard.BackgroundColor3 = Palette.CardBg
             sliderCard.BackgroundTransparency = 0.18
             sliderCard.BorderSizePixel = 0
@@ -926,7 +1051,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             cardStroke.Parent = sliderCard
 
             local nameLabel = Instance.new("TextLabel")
-            nameLabel.Size = UDim2.new(1, -90, 0, 20)
+            nameLabel.Size = UDim2.new(1, -90, 0, 18)
             nameLabel.Position = UDim2.new(0, 14, 0, 8)
             nameLabel.BackgroundTransparency = 1
             nameLabel.Text = options.Name
@@ -938,7 +1063,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             nameLabel.Parent = sliderCard
 
             local valLabel = Instance.new("TextLabel")
-            valLabel.Size = UDim2.new(0, 70, 0, 20)
+            valLabel.Size = UDim2.new(0, 70, 0, 18)
             valLabel.Position = UDim2.new(1, -84, 0, 8)
             valLabel.BackgroundTransparency = 1
             valLabel.Text = tostring(current) .. suffix
@@ -951,7 +1076,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local track = Instance.new("Frame")
             track.Size = UDim2.new(1, -28, 0, 4)
-            track.Position = UDim2.new(0, 14, 0, 36)
+            track.Position = UDim2.new(0, 14, 0, 34)
             track.BackgroundColor3 = Palette.PillOff
             track.BorderSizePixel = 0
             track.ZIndex = 14
@@ -965,7 +1090,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local fill = Instance.new("Frame")
             fill.Size = UDim2.new(pct, 0, 1, 0)
-            fill.BackgroundColor3 = Palette.AccentWhite
+            fill.BackgroundColor3 = HoodUI:GetThemeData().Accent
             fill.BorderSizePixel = 0
             fill.ZIndex = 15
             fill.Parent = track
@@ -977,7 +1102,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             local knob = Instance.new("Frame")
             knob.Size = UDim2.new(0, 10, 0, 10)
             knob.Position = UDim2.new(pct, -5, 0.5, -5)
-            knob.BackgroundColor3 = Palette.AccentWhite
+            knob.BackgroundColor3 = HoodUI:GetThemeData().Accent
             knob.BorderSizePixel = 0
             knob.ZIndex = 16
             knob.Parent = track
@@ -985,6 +1110,13 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             local knobCorner = Instance.new("UICorner")
             knobCorner.CornerRadius = UDim.new(1, 0)
             knobCorner.Parent = knob
+
+            table.insert(HoodUI.ThemeListeners, function(theme)
+                if fill and fill.Parent then
+                    fill.BackgroundColor3 = theme.Accent
+                    knob.BackgroundColor3 = theme.Accent
+                end
+            end)
 
             local isSliding = false
 
@@ -1006,7 +1138,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local hit = Instance.new("TextButton")
             hit.Size = UDim2.new(1, 0, 0, 20)
-            hit.Position = UDim2.new(0, 0, 0, 28)
+            hit.Position = UDim2.new(0, 0, 0, 26)
             hit.BackgroundTransparency = 1
             hit.Text = ""
             hit.ZIndex = 17
@@ -1043,7 +1175,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             return SliderObj
         end
 
-        function TabObj:CreateDropdown(options: { Name: string, Options: { string }, CurrentOption: { string } | string?, Flag: string?, Callback: (string) -> () })
+        function TabObj:CreateDropdown(options: { Name: string, Options: { string }, CurrentOption: { string } | string?, Flag: string?, Callback: (any) -> () })
             local list = options.Options or {}
             local current = ""
             if typeof(options.CurrentOption) == "table" then
@@ -1057,7 +1189,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local dropCard = Instance.new("Frame")
             dropCard.Name = options.Name .. "_Dropdown"
-            dropCard.Size = UDim2.new(1, 0, 0, 44)
+            dropCard.Size = UDim2.new(1, 0, 0, 42)
             dropCard.BackgroundColor3 = Palette.CardBg
             dropCard.BackgroundTransparency = 0.18
             dropCard.BorderSizePixel = 0
@@ -1075,7 +1207,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             cardStroke.Parent = dropCard
 
             local nameLabel = Instance.new("TextLabel")
-            nameLabel.Size = UDim2.new(0.5, -14, 0, 44)
+            nameLabel.Size = UDim2.new(0.5, -14, 0, 42)
             nameLabel.Position = UDim2.new(0, 14, 0, 0)
             nameLabel.BackgroundTransparency = 1
             nameLabel.Text = options.Name
@@ -1087,7 +1219,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             nameLabel.Parent = dropCard
 
             local dropBtn = Instance.new("TextButton")
-            dropBtn.Size = UDim2.new(0.46, 0, 0, 28)
+            dropBtn.Size = UDim2.new(0.46, 0, 0, 26)
             dropBtn.Position = UDim2.new(0.52, 0, 0, 8)
             dropBtn.BackgroundColor3 = Palette.InputBg
             dropBtn.BackgroundTransparency = 0.2
@@ -1110,7 +1242,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local listHolder = Instance.new("Frame")
             listHolder.Size = UDim2.new(1, -28, 0, #list * 28 + 6)
-            listHolder.Position = UDim2.new(0, 14, 0, 46)
+            listHolder.Position = UDim2.new(0, 14, 0, 44)
             listHolder.BackgroundTransparency = 1
             listHolder.ZIndex = 14
             listHolder.Parent = dropCard
@@ -1125,20 +1257,30 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             local function toggleExpand()
                 isExpanded = not isExpanded
                 if isExpanded then
-                    local targetH = 48 + (#list * 32)
+                    local targetH = 46 + (#list * 30)
                     tween(dropCard, 0.2, { Size = UDim2.new(1, 0, 0, targetH) })
                     dropBtn.Text = current .. "  ^"
                 else
-                    tween(dropCard, 0.2, { Size = UDim2.new(1, 0, 0, 44) })
+                    tween(dropCard, 0.2, { Size = UDim2.new(1, 0, 0, 42) })
                     dropBtn.Text = current .. "  v"
                 end
             end
 
             dropBtn.MouseButton1Click:Connect(toggleExpand)
 
+            local function fireCallback(val: string)
+                if options.Callback then
+                    local argTable = { val, [1] = val }
+                    setmetatable(argTable, {
+                        __tostring = function() return val end
+                    })
+                    pcall(options.Callback, argTable)
+                end
+            end
+
             for _, opt in ipairs(list) do
                 local optBtn = Instance.new("TextButton")
-                optBtn.Size = UDim2.new(1, 0, 0, 26)
+                optBtn.Size = UDim2.new(1, 0, 0, 24)
                 optBtn.BackgroundColor3 = (opt == current) and Palette.CardActive or Palette.InputBg
                 optBtn.BackgroundTransparency = 0.2
                 optBtn.BorderSizePixel = 0
@@ -1169,9 +1311,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
                     optBtn.TextColor3 = Palette.TextPrimary
                     optBtn.BackgroundColor3 = Palette.CardActive
 
-                    if options.Callback then
-                        pcall(options.Callback, current)
-                    end
+                    fireCallback(current)
                 end)
             end
 
@@ -1180,7 +1320,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
                     current = opt
                     if options.Flag then HoodUI.Flags[options.Flag] = current end
                     dropBtn.Text = current .. "  v"
-                    if options.Callback then pcall(options.Callback, current) end
+                    fireCallback(current)
                 end,
                 CurrentOption = function() return current end,
             }
@@ -1191,7 +1331,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
         function TabObj:CreateInput(options: { Name: string, PlaceholderText: string?, Flag: string?, Callback: (string) -> () })
             local inCard = Instance.new("Frame")
             inCard.Name = options.Name .. "_Input"
-            inCard.Size = UDim2.new(1, 0, 0, 44)
+            inCard.Size = UDim2.new(1, 0, 0, 42)
             inCard.BackgroundColor3 = Palette.CardBg
             inCard.BackgroundTransparency = 0.18
             inCard.BorderSizePixel = 0
@@ -1220,8 +1360,8 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             nameLabel.Parent = inCard
 
             local tb = Instance.new("TextBox")
-            tb.Size = UDim2.new(0.56, 0, 0, 28)
-            tb.Position = UDim2.new(0.42, 0, 0.5, -14)
+            tb.Size = UDim2.new(0.56, 0, 0, 26)
+            tb.Position = UDim2.new(0.42, 0, 0.5, -13)
             tb.BackgroundColor3 = Palette.InputBg
             tb.BackgroundTransparency = 0.2
             tb.BorderSizePixel = 0
@@ -1264,7 +1404,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
 
             local kbFrame = Instance.new("Frame")
             kbFrame.Name = options.Name .. "_Keybind"
-            kbFrame.Size = UDim2.new(1, 0, 0, 44)
+            kbFrame.Size = UDim2.new(1, 0, 0, 42)
             kbFrame.BackgroundColor3 = Palette.CardBg
             kbFrame.BackgroundTransparency = 0.18
             kbFrame.BorderSizePixel = 0
@@ -1293,8 +1433,8 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             nameLabel.Parent = kbFrame
 
             local keyBtn = Instance.new("TextButton")
-            keyBtn.Size = UDim2.new(0, 64, 0, 24)
-            keyBtn.Position = UDim2.new(1, -78, 0.5, -12)
+            keyBtn.Size = UDim2.new(0, 60, 0, 24)
+            keyBtn.Position = UDim2.new(1, -74, 0.5, -12)
             keyBtn.BackgroundColor3 = Palette.InputBg
             keyBtn.BackgroundTransparency = 0.2
             keyBtn.BorderSizePixel = 0
@@ -1318,7 +1458,7 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
             keyBtn.MouseButton1Click:Connect(function()
                 isWaiting = true
                 keyBtn.Text = "..."
-                keyBtn.BackgroundColor3 = Palette.CardActiveBorder
+                keyBtn.BackgroundColor3 = HoodUI:GetThemeData().CardActiveBorder
                 keyBtn.TextColor3 = Palette.TextPrimary
             end)
 
