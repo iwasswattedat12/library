@@ -711,6 +711,15 @@ function HoodUI:CreateWindow(options: { Name: string?, ToggleKey: Enum.KeyCode?,
         tabBtnCorner.CornerRadius = UDim.new(0, 6)
         tabBtnCorner.Parent = tabBtn
 
+        tabBtn.MouseEnter:Connect(function()
+            if WindowObj.ActiveTab and WindowObj.ActiveTab.Button == tabBtn then return end
+            tween(tabBtn, 0.12, { TextColor3 = Palette.TextSecondary, BackgroundTransparency = 0.6, BackgroundColor3 = Palette.CardBg })
+        end)
+        tabBtn.MouseLeave:Connect(function()
+            if WindowObj.ActiveTab and WindowObj.ActiveTab.Button == tabBtn then return end
+            tween(tabBtn, 0.12, { TextColor3 = Palette.TextMuted, BackgroundTransparency = 1 })
+        end)
+
         local activeBar = Instance.new("Frame")
         activeBar.Size = UDim2.new(0, 16, 0, 2)
         activeBar.Position = UDim2.new(0, 10, 1, -3)
