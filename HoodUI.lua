@@ -84,6 +84,39 @@ local function tween(instance: Instance, duration: number, properties: { [string
     return anim
 end
 
+local function makeDraggable(frame: Frame, dragHandle: GuiObject?)
+    dragHandle = dragHandle or frame
+    local dragging = false
+    local dragInput, dragStart, startPos
+
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
 local HoodUI = {
     Flags = {},
     Windows = {},
@@ -91,8 +124,92 @@ local HoodUI = {
     Accent = Themes.Default.Accent,
     AccentHover = Themes.Default.AccentHover,
     ScreenGui = nil :: ScreenGui?,
+    DarkenOverlay = nil :: Frame?,
+    ParticleContainer = nil :: Frame?,
     NotifyContainer = nil :: Frame?,
+    IsGuiOpen = true,
+    ActiveParticles = {},
+    ParticleRunning = false,
 }
+
+local FLYING_ASSET_ID = "rbxassetid://123190078434353"
+
+local function spawnSingleParticle(initialXFrac: number?)
+    if not HoodUI.ScreenGui or not HoodUI.ParticleContainer or not HoodUI.IsGuiOpen then return end
+
+    local size = math.random(60, 110)
+    local startYFrac = math.random(5, 85) / 100
+    local endYFrac = math.clamp(startYFrac + (math.random(-15, 15) / 100), 0.05, 0.9)
+    local travelDuration = math.random(25, 55) / 10
+
+    local img = Instance.new("ImageLabel")
+    img.Name = "FlyingAsset"
+    img.Image = FLYING_ASSET_ID
+    img.Size = UDim2.new(0, size, 0, size)
+    img.BackgroundTransparency = 1
+    img.BorderSizePixel = 0
+    img.ScaleType = Enum.ScaleType.Fit
+    img.Active = false
+    img.Selectable = false
+    img.ZIndex = 3
+    img.Rotation = math.random(-25, 25)
+    img.Parent = HoodUI.ParticleContainer
+
+    table.insert(HoodUI.ActiveParticles, img)
+
+    local startXScale = initialXFrac or -0.15
+    local startXOffset = initialXFrac and 0 or -size
+    img.Position = UDim2.new(startXScale, startXOffset, startYFrac, 0)
+
+    local remainingFrac = 1.15 - startXScale
+    local adjustedDuration = travelDuration * (remainingFrac / 1.3)
+
+    local endPos = UDim2.new(1.15, size, endYFrac, 0)
+    local flyAnim = tween(img, adjustedDuration, { Position = endPos, Rotation = img.Rotation + math.random(-40, 40) }, Enum.EasingStyle.Linear)
+
+    flyAnim.Completed:Connect(function()
+        for idx, p in ipairs(HoodUI.ActiveParticles) do
+            if p == img then
+                table.remove(HoodUI.ActiveParticles, idx)
+                break
+            end
+        end
+        img:Destroy()
+
+        if HoodUI.IsGuiOpen and HoodUI.ParticleRunning then
+            spawnSingleParticle(nil)
+        end
+    end)
+end
+
+local function startParticles()
+    if HoodUI.ParticleRunning then return end
+    HoodUI.ParticleRunning = true
+
+    for i = 1, 6 do
+        local frac = (i - 1) * 0.18
+        spawnSingleParticle(frac)
+    end
+
+    task.spawn(function()
+        while HoodUI.IsGuiOpen and HoodUI.ParticleRunning do
+            while #HoodUI.ActiveParticles < 5 and HoodUI.IsGuiOpen do
+                spawnSingleParticle(nil)
+            end
+            task.wait(0.5)
+        end
+    end)
+end
+
+local function stopParticles()
+    HoodUI.ParticleRunning = false
+    for _, p in ipairs(HoodUI.ActiveParticles) do
+        if p and p.Parent then
+            p:Destroy()
+        end
+    end
+    HoodUI.ActiveParticles = {}
+end
 
 local function ensureScreenGui()
     if HoodUI.ScreenGui and HoodUI.ScreenGui.Parent then return HoodUI.ScreenGui end
@@ -107,12 +224,33 @@ local function ensureScreenGui()
     sg.DisplayOrder = 999
     sg.Parent = getGuiParent()
 
+    local overlay = Instance.new("Frame")
+    overlay.Name = "DarkenOverlay"
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.Position = UDim2.new(0, 0, 0, 0)
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    overlay.BackgroundTransparency = 0.55
+    overlay.BorderSizePixel = 0
+    overlay.ZIndex = 1
+    overlay.Parent = sg
+
+    local partContainer = Instance.new("Frame")
+    partContainer.Name = "ParticleContainer"
+    partContainer.Size = UDim2.new(1, 0, 1, 0)
+    partContainer.Position = UDim2.new(0, 0, 0, 0)
+    partContainer.BackgroundTransparency = 1
+    partContainer.BorderSizePixel = 0
+    partContainer.ZIndex = 2
+    partContainer.ClipsDescendants = true
+    partContainer.Parent = sg
+
     local notifFrame = Instance.new("Frame")
     notifFrame.Name = "Notifications"
     notifFrame.Size = UDim2.new(0, 310, 1, -20)
     notifFrame.Position = UDim2.new(1, -320, 0, 10)
     notifFrame.BackgroundTransparency = 1
     notifFrame.BorderSizePixel = 0
+    notifFrame.ZIndex = 100
     notifFrame.Parent = sg
 
     local listLayout = Instance.new("UIListLayout")
@@ -122,7 +260,12 @@ local function ensureScreenGui()
     listLayout.Parent = notifFrame
 
     HoodUI.ScreenGui = sg
+    HoodUI.DarkenOverlay = overlay
+    HoodUI.ParticleContainer = partContainer
     HoodUI.NotifyContainer = notifFrame
+
+    startParticles()
+
     return sg
 end
 
@@ -131,6 +274,27 @@ function HoodUI:SetTheme(themeName: string)
     self.CurrentTheme = themeName
     self.Accent = preset.Accent
     self.AccentHover = preset.AccentHover
+end
+
+function HoodUI:SetGuiOpen(isOpen: boolean)
+    self.IsGuiOpen = isOpen
+    ensureScreenGui()
+
+    if isOpen then
+        tween(self.DarkenOverlay, 0.3, { BackgroundTransparency = 0.55 })
+        startParticles()
+    else
+        tween(self.DarkenOverlay, 0.3, { BackgroundTransparency = 1 })
+        stopParticles()
+    end
+
+    for _, win in ipairs(self.Windows) do
+        win:SetVisible(isOpen)
+    end
+end
+
+function HoodUI:ToggleGui()
+    self:SetGuiOpen(not self.IsGuiOpen)
 end
 
 function HoodUI:Notify(options: { Title: string?, Content: string?, Duration: number?, Image: string? })
@@ -147,6 +311,7 @@ function HoodUI:Notify(options: { Title: string?, Content: string?, Duration: nu
     card.BackgroundColor3 = Palette.ElementBg
     card.BorderSizePixel = 0
     card.BackgroundTransparency = 0.05
+    card.ZIndex = 101
     card.Parent = HoodUI.NotifyContainer
 
     local corner = Instance.new("UICorner")
@@ -167,6 +332,7 @@ function HoodUI:Notify(options: { Title: string?, Content: string?, Duration: nu
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 102
     titleLabel.Parent = card
 
     local contentLabel = Instance.new("TextLabel")
@@ -180,6 +346,7 @@ function HoodUI:Notify(options: { Title: string?, Content: string?, Duration: nu
     contentLabel.TextWrapped = true
     contentLabel.TextXAlignment = Enum.TextXAlignment.Left
     contentLabel.TextYAlignment = Enum.TextYAlignment.Top
+    contentLabel.ZIndex = 102
     contentLabel.Parent = card
 
     local bar = Instance.new("Frame")
@@ -187,6 +354,7 @@ function HoodUI:Notify(options: { Title: string?, Content: string?, Duration: nu
     bar.Position = UDim2.new(0, 4, 1, -5)
     bar.BackgroundColor3 = HoodUI.Accent
     bar.BorderSizePixel = 0
+    bar.ZIndex = 102
     bar.Parent = card
 
     local barCorner = Instance.new("UICorner")
@@ -216,33 +384,34 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
     end
 
     local toggleKeyCode = options.ToggleKey or Enum.KeyCode.RightControl
-    local winWidth = options.Width or 680
-    local winHeight = options.Height or 460
+    local navWidth = 210
+    local navHeight = options.Height or 460
 
-    local winFrame = Instance.new("Frame")
-    winFrame.Name = "HoodUIWindow"
-    winFrame.Size = UDim2.new(0, winWidth, 0, winHeight)
-    winFrame.Position = UDim2.new(0.5, -winWidth / 2, 0.5, -winHeight / 2)
-    winFrame.BackgroundColor3 = Palette.WindowBg
-    winFrame.BorderSizePixel = 0
-    winFrame.ClipsDescendants = true
-    winFrame.Parent = HoodUI.ScreenGui
+    local navFrame = Instance.new("Frame")
+    navFrame.Name = "HoodUINav"
+    navFrame.Size = UDim2.new(0, navWidth, 0, navHeight)
+    navFrame.Position = UDim2.new(0.5, -340, 0.5, -navHeight / 2)
+    navFrame.BackgroundColor3 = Palette.SidebarBg
+    navFrame.BorderSizePixel = 0
+    navFrame.ZIndex = 10
+    navFrame.Parent = HoodUI.ScreenGui
 
-    local winCorner = Instance.new("UICorner")
-    winCorner.CornerRadius = UDim.new(0, 10)
-    winCorner.Parent = winFrame
+    local navCorner = Instance.new("UICorner")
+    navCorner.CornerRadius = UDim.new(0, 10)
+    navCorner.Parent = navFrame
 
-    local winStroke = Instance.new("UIStroke")
-    winStroke.Thickness = 1
-    winStroke.Color = Palette.WindowBorder
-    winStroke.Parent = winFrame
+    local navStroke = Instance.new("UIStroke")
+    navStroke.Thickness = 1
+    navStroke.Color = Palette.SidebarBorder
+    navStroke.Parent = navFrame
 
     local header = Instance.new("Frame")
     header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 44)
+    header.Size = UDim2.new(1, 0, 0, 48)
     header.BackgroundColor3 = Palette.HeaderBg
     header.BorderSizePixel = 0
-    header.Parent = winFrame
+    header.ZIndex = 11
+    header.Parent = navFrame
 
     local headerCorner = Instance.new("UICorner")
     headerCorner.CornerRadius = UDim.new(0, 10)
@@ -254,68 +423,53 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
     headerStroke.Parent = header
 
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(0, 240, 0, 20)
-    titleLabel.Position = UDim2.new(0, 16, 0, 6)
+    titleLabel.Size = UDim2.new(1, -60, 0, 20)
+    titleLabel.Position = UDim2.new(0, 14, 0, 7)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = options.Name or "Hood UI"
     titleLabel.TextColor3 = Palette.TextPrimary
     titleLabel.TextSize = 14
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 12
     titleLabel.Parent = header
 
     local subLabel = Instance.new("TextLabel")
-    subLabel.Size = UDim2.new(0, 240, 0, 14)
-    subLabel.Position = UDim2.new(0, 16, 0, 24)
+    subLabel.Size = UDim2.new(1, -60, 0, 14)
+    subLabel.Position = UDim2.new(0, 14, 0, 26)
     subLabel.BackgroundTransparency = 1
     subLabel.Text = options.LoadingSubtitle or "by Antigravity"
     subLabel.TextColor3 = Palette.TextMuted
     subLabel.TextSize = 11
     subLabel.Font = Enum.Font.Gotham
     subLabel.TextXAlignment = Enum.TextXAlignment.Left
+    subLabel.ZIndex = 12
     subLabel.Parent = header
 
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 28, 0, 28)
-    closeBtn.Position = UDim2.new(1, -36, 0, 8)
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.Text = "✕"
-    closeBtn.TextColor3 = Palette.TextMuted
-    closeBtn.TextSize = 14
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.Parent = header
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 28, 0, 28)
+    toggleBtn.Position = UDim2.new(1, -34, 0, 10)
+    toggleBtn.BackgroundTransparency = 1
+    toggleBtn.Text = "✕"
+    toggleBtn.TextColor3 = Palette.TextMuted
+    toggleBtn.TextSize = 14
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.ZIndex = 12
+    toggleBtn.Parent = header
 
-    local minBtn = Instance.new("TextButton")
-    minBtn.Size = UDim2.new(0, 28, 0, 28)
-    minBtn.Position = UDim2.new(1, -66, 0, 8)
-    minBtn.BackgroundTransparency = 1
-    minBtn.Text = "—"
-    minBtn.TextColor3 = Palette.TextMuted
-    minBtn.TextSize = 14
-    minBtn.Font = Enum.Font.GothamBold
-    minBtn.Parent = header
+    toggleBtn.MouseButton1Click:Connect(function()
+        HoodUI:ToggleGui()
+    end)
 
-    local sidebar = Instance.new("Frame")
-    sidebar.Name = "Sidebar"
-    sidebar.Size = UDim2.new(0, 180, 1, -44)
-    sidebar.Position = UDim2.new(0, 0, 0, 44)
-    sidebar.BackgroundColor3 = Palette.SidebarBg
-    sidebar.BorderSizePixel = 0
-    sidebar.Parent = winFrame
-
-    local sideDivider = Instance.new("Frame")
-    sideDivider.Size = UDim2.new(0, 1, 1, 0)
-    sideDivider.Position = UDim2.new(1, -1, 0, 0)
-    sideDivider.BackgroundColor3 = Palette.SidebarBorder
-    sideDivider.BorderSizePixel = 0
-    sideDivider.Parent = sidebar
+    makeDraggable(navFrame, header)
 
     local searchFrame = Instance.new("Frame")
     searchFrame.Size = UDim2.new(1, -20, 0, 28)
-    searchFrame.Position = UDim2.new(0, 10, 0, 10)
+    searchFrame.Position = UDim2.new(0, 10, 0, 56)
     searchFrame.BackgroundColor3 = Palette.InputBg
     searchFrame.BorderSizePixel = 0
-    searchFrame.Parent = sidebar
+    searchFrame.ZIndex = 11
+    searchFrame.Parent = navFrame
 
     local searchCorner = Instance.new("UICorner")
     searchCorner.CornerRadius = UDim.new(0, 6)
@@ -330,121 +484,138 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
     searchBox.Size = UDim2.new(1, -16, 1, 0)
     searchBox.Position = UDim2.new(0, 8, 0, 0)
     searchBox.BackgroundTransparency = 1
-    searchBox.PlaceholderText = "Search..."
+    searchBox.PlaceholderText = "Search elements..."
     searchBox.PlaceholderColor3 = Palette.TextMuted
     searchBox.TextColor3 = Palette.TextPrimary
     searchBox.TextSize = 12
     searchBox.Font = Enum.Font.Gotham
     searchBox.TextXAlignment = Enum.TextXAlignment.Left
     searchBox.ClearTextOnFocus = false
+    searchBox.ZIndex = 12
     searchBox.Parent = searchFrame
 
     local tabList = Instance.new("ScrollingFrame")
     tabList.Name = "TabList"
-    tabList.Size = UDim2.new(1, -12, 1, -50)
-    tabList.Position = UDim2.new(0, 6, 0, 46)
+    tabList.Size = UDim2.new(1, -12, 1, -96)
+    tabList.Position = UDim2.new(0, 6, 0, 92)
     tabList.BackgroundTransparency = 1
     tabList.BorderSizePixel = 0
     tabList.ScrollBarThickness = 2
     tabList.ScrollBarImageColor3 = Palette.SidebarBorder
     tabList.CanvasSize = UDim2.new(0, 0, 0, 0)
     tabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    tabList.Parent = sidebar
+    tabList.ZIndex = 11
+    tabList.Parent = navFrame
 
     local tabLayout = Instance.new("UIListLayout")
     tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    tabLayout.Padding = UDim.new(0, 4)
+    tabLayout.Padding = UDim.new(0, 6)
     tabLayout.Parent = tabList
-
-    local contentContainer = Instance.new("Frame")
-    contentContainer.Name = "ContentContainer"
-    contentContainer.Size = UDim2.new(1, -180, 1, -44)
-    contentContainer.Position = UDim2.new(0, 180, 0, 44)
-    contentContainer.BackgroundTransparency = 1
-    contentContainer.BorderSizePixel = 0
-    contentContainer.Parent = winFrame
-
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = winFrame.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    header.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            winFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    local isMinimized = false
-    local isVisible = true
-
-    closeBtn.MouseButton1Click:Connect(function()
-        isVisible = not isVisible
-        winFrame.Visible = isVisible
-    end)
-
-    minBtn.MouseButton1Click:Connect(function()
-        isMinimized = not isMinimized
-        if isMinimized then
-            sidebar.Visible = false
-            contentContainer.Visible = false
-            tween(winFrame, 0.25, { Size = UDim2.new(0, winWidth, 0, 44) })
-        else
-            local anim = tween(winFrame, 0.25, { Size = UDim2.new(0, winWidth, 0, winHeight) })
-            anim.Completed:Connect(function()
-                if not isMinimized then
-                    sidebar.Visible = true
-                    contentContainer.Visible = true
-                end
-            end)
-        end
-    end)
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == toggleKeyCode then
-            isVisible = not isVisible
-            winFrame.Visible = isVisible
+            HoodUI:ToggleGui()
         end
     end)
 
     local WindowObj = {
-        Frame = winFrame,
+        Frame = navFrame,
         Tabs = {},
-        ActiveTab = nil,
+        TabSpawnOffset = 0,
     }
 
+    function WindowObj:SetVisible(visible: boolean)
+        navFrame.Visible = visible
+        for _, tab in ipairs(self.Tabs) do
+            if tab.IsOpen then
+                tab.Window.Visible = visible
+            else
+                tab.Window.Visible = false
+            end
+        end
+    end
+
     function WindowObj:CreateTab(tabName: string, iconId: string?)
+        local tabWinWidth = 470
+        local tabWinHeight = 440
+
+        local initialX = navFrame.Position.X.Offset + navWidth + 14 + (WindowObj.TabSpawnOffset % 60)
+        local initialY = navFrame.Position.Y.Offset + (WindowObj.TabSpawnOffset % 60)
+        WindowObj.TabSpawnOffset = WindowObj.TabSpawnOffset + 20
+
+        local tabWin = Instance.new("Frame")
+        tabWin.Name = tabName .. "_Window"
+        tabWin.Size = UDim2.new(0, tabWinWidth, 0, tabWinHeight)
+        tabWin.Position = UDim2.new(navFrame.Position.X.Scale, initialX, navFrame.Position.Y.Scale, initialY)
+        tabWin.BackgroundColor3 = Palette.WindowBg
+        tabWin.BorderSizePixel = 0
+        tabWin.ZIndex = 15
+        tabWin.Visible = false
+        tabWin.Parent = HoodUI.ScreenGui
+
+        local tabWinCorner = Instance.new("UICorner")
+        tabWinCorner.CornerRadius = UDim.new(0, 10)
+        tabWinCorner.Parent = tabWin
+
+        local tabWinStroke = Instance.new("UIStroke")
+        tabWinStroke.Thickness = 1
+        tabWinStroke.Color = Palette.WindowBorder
+        tabWinStroke.Parent = tabWin
+
+        local tabHeader = Instance.new("Frame")
+        tabHeader.Name = "Header"
+        tabHeader.Size = UDim2.new(1, 0, 0, 40)
+        tabHeader.BackgroundColor3 = Palette.HeaderBg
+        tabHeader.BorderSizePixel = 0
+        tabHeader.ZIndex = 16
+        tabHeader.Parent = tabWin
+
+        local tabHeaderCorner = Instance.new("UICorner")
+        tabHeaderCorner.CornerRadius = UDim.new(0, 10)
+        tabHeaderCorner.Parent = tabHeader
+
+        local tabHeaderStroke = Instance.new("UIStroke")
+        tabHeaderStroke.Thickness = 1
+        tabHeaderStroke.Color = Palette.HeaderBorder
+        tabHeaderStroke.Parent = tabHeader
+
+        local tabTitle = Instance.new("TextLabel")
+        tabTitle.Size = UDim2.new(1, -60, 1, 0)
+        tabTitle.Position = UDim2.new(0, 14, 0, 0)
+        tabTitle.BackgroundTransparency = 1
+        tabTitle.Text = tabName
+        tabTitle.TextColor3 = Palette.TextPrimary
+        tabTitle.TextSize = 13
+        tabTitle.Font = Enum.Font.GothamBold
+        tabTitle.TextXAlignment = Enum.TextXAlignment.Left
+        tabTitle.ZIndex = 17
+        tabTitle.Parent = tabHeader
+
+        local tabCloseBtn = Instance.new("TextButton")
+        tabCloseBtn.Size = UDim2.new(0, 24, 0, 24)
+        tabCloseBtn.Position = UDim2.new(1, -30, 0, 8)
+        tabCloseBtn.BackgroundTransparency = 1
+        tabCloseBtn.Text = "✕"
+        tabCloseBtn.TextColor3 = Palette.TextMuted
+        tabCloseBtn.TextSize = 13
+        tabCloseBtn.Font = Enum.Font.GothamBold
+        tabCloseBtn.ZIndex = 17
+        tabCloseBtn.Parent = tabHeader
+
+        makeDraggable(tabWin, tabHeader)
+
         local page = Instance.new("ScrollingFrame")
-        page.Name = tabName .. "_Page"
-        page.Size = UDim2.new(1, -20, 1, -16)
-        page.Position = UDim2.new(0, 10, 0, 8)
+        page.Name = "Page"
+        page.Size = UDim2.new(1, -16, 1, -52)
+        page.Position = UDim2.new(0, 8, 0, 46)
         page.BackgroundTransparency = 1
         page.BorderSizePixel = 0
         page.ScrollBarThickness = 3
         page.ScrollBarImageColor3 = HoodUI.Accent
         page.CanvasSize = UDim2.new(0, 0, 0, 0)
         page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        page.Visible = false
-        page.Parent = contentContainer
+        page.ZIndex = 16
+        page.Parent = tabWin
 
         local pageLayout = Instance.new("UIListLayout")
         pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -452,9 +623,9 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
         pageLayout.Parent = page
 
         local tabBtn = Instance.new("TextButton")
-        tabBtn.Name = tabName .. "_Btn"
-        tabBtn.Size = UDim2.new(1, 0, 0, 34)
-        tabBtn.BackgroundColor3 = Palette.SidebarBg
+        tabBtn.Name = tabName .. "_NavBtn"
+        tabBtn.Size = UDim2.new(1, 0, 0, 36)
+        tabBtn.BackgroundColor3 = Palette.ElementBg
         tabBtn.BorderSizePixel = 0
         tabBtn.Text = "   " .. tabName
         tabBtn.TextColor3 = Palette.TextMuted
@@ -462,18 +633,25 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
         tabBtn.Font = Enum.Font.Gotham
         tabBtn.TextXAlignment = Enum.TextXAlignment.Left
         tabBtn.AutoButtonColor = false
+        tabBtn.ZIndex = 12
         tabBtn.Parent = tabList
 
-        local tabCorner = Instance.new("UICorner")
-        tabCorner.CornerRadius = UDim.new(0, 6)
-        tabCorner.Parent = tabBtn
+        local tabBtnCorner = Instance.new("UICorner")
+        tabBtnCorner.CornerRadius = UDim.new(0, 6)
+        tabBtnCorner.Parent = tabBtn
+
+        local tabBtnStroke = Instance.new("UIStroke")
+        tabBtnStroke.Thickness = 1
+        tabBtnStroke.Color = Palette.ElementBorder
+        tabBtnStroke.Parent = tabBtn
 
         local indicator = Instance.new("Frame")
         indicator.Size = UDim2.new(0, 3, 0.6, 0)
-        indicator.Position = UDim2.new(0, 2, 0.2, 0)
+        indicator.Position = UDim2.new(0, 3, 0.2, 0)
         indicator.BackgroundColor3 = HoodUI.Accent
         indicator.BorderSizePixel = 0
         indicator.Visible = false
+        indicator.ZIndex = 13
         indicator.Parent = tabBtn
 
         local indCorner = Instance.new("UICorner")
@@ -482,30 +660,43 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
 
         local TabObj = {
             Name = tabName,
+            Window = tabWin,
             Page = page,
             Button = tabBtn,
             Indicator = indicator,
             Elements = {},
+            IsOpen = false,
         }
 
-        local function selectTab()
-            for _, other in ipairs(WindowObj.Tabs) do
-                other.Page.Visible = false
-                other.Indicator.Visible = false
-                other.Button.TextColor3 = Palette.TextMuted
-                other.Button.BackgroundColor3 = Palette.SidebarBg
+        local function setTabOpen(open: boolean)
+            TabObj.IsOpen = open
+            if open then
+                tabWin.Visible = true
+                indicator.Visible = true
+                tabBtn.TextColor3 = Palette.TextPrimary
+                tabBtn.BackgroundColor3 = Palette.ElementHover
+                tabBtnStroke.Color = HoodUI.Accent
+                tabWin.Size = UDim2.new(0, tabWinWidth * 0.95, 0, tabWinHeight * 0.95)
+                tween(tabWin, 0.2, { Size = UDim2.new(0, tabWinWidth, 0, tabWinHeight) })
+            else
+                tabWin.Visible = false
+                indicator.Visible = false
+                tabBtn.TextColor3 = Palette.TextMuted
+                tabBtn.BackgroundColor3 = Palette.ElementBg
+                tabBtnStroke.Color = Palette.ElementBorder
             end
-            page.Visible = true
-            indicator.Visible = true
-            tabBtn.TextColor3 = Palette.TextPrimary
-            tabBtn.BackgroundColor3 = Palette.ElementBg
-            WindowObj.ActiveTab = TabObj
         end
 
-        tabBtn.MouseButton1Click:Connect(selectTab)
+        tabBtn.MouseButton1Click:Connect(function()
+            setTabOpen(not TabObj.IsOpen)
+        end)
+
+        tabCloseBtn.MouseButton1Click:Connect(function()
+            setTabOpen(false)
+        end)
 
         if #WindowObj.Tabs == 0 then
-            selectTab()
+            setTabOpen(true)
         end
 
         table.insert(WindowObj.Tabs, TabObj)
@@ -527,6 +718,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             sec.Name = "Section"
             sec.Size = UDim2.new(1, 0, 0, 26)
             sec.BackgroundTransparency = 1
+            sec.ZIndex = 16
             sec.Parent = page
 
             local title = Instance.new("TextLabel")
@@ -539,6 +731,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 12
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = sec
 
             local line = Instance.new("Frame")
@@ -546,6 +739,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             line.Position = UDim2.new(0, 110, 0.5, 0)
             line.BackgroundColor3 = Palette.ElementBorder
             line.BorderSizePixel = 0
+            line.ZIndex = 16
             line.Parent = sec
 
             table.insert(TabObj.Elements, sec)
@@ -559,6 +753,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             btnFrame.Size = UDim2.new(1, 0, 0, hasDesc and 50 or 38)
             btnFrame.BackgroundColor3 = Palette.ElementBg
             btnFrame.BorderSizePixel = 0
+            btnFrame.ZIndex = 16
             btnFrame.Parent = page
 
             local corner = Instance.new("UICorner")
@@ -580,6 +775,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 13
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = btnFrame
 
             if hasDesc then
@@ -592,6 +788,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
                 desc.TextSize = 11
                 desc.Font = Enum.Font.Gotham
                 desc.TextXAlignment = Enum.TextXAlignment.Left
+                desc.ZIndex = 17
                 desc.Parent = btnFrame
             end
 
@@ -599,6 +796,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             hit.Size = UDim2.new(1, 0, 1, 0)
             hit.BackgroundTransparency = 1
             hit.Text = ""
+            hit.ZIndex = 18
             hit.Parent = btnFrame
 
             hit.MouseEnter:Connect(function()
@@ -630,6 +828,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             tglFrame.Size = UDim2.new(1, 0, 0, 38)
             tglFrame.BackgroundColor3 = Palette.ElementBg
             tglFrame.BorderSizePixel = 0
+            tglFrame.ZIndex = 16
             tglFrame.Parent = page
 
             local corner = Instance.new("UICorner")
@@ -651,6 +850,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 13
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = tglFrame
 
             local pill = Instance.new("Frame")
@@ -658,6 +858,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             pill.Position = UDim2.new(1, -50, 0.5, -10)
             pill.BackgroundColor3 = state and HoodUI.Accent or Palette.InputBg
             pill.BorderSizePixel = 0
+            pill.ZIndex = 17
             pill.Parent = tglFrame
 
             local pillCorner = Instance.new("UICorner")
@@ -674,6 +875,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             knob.Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
             knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             knob.BorderSizePixel = 0
+            knob.ZIndex = 18
             knob.Parent = pill
 
             local knobCorner = Instance.new("UICorner")
@@ -684,6 +886,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             hit.Size = UDim2.new(1, 0, 1, 0)
             hit.BackgroundTransparency = 1
             hit.Text = ""
+            hit.ZIndex = 19
             hit.Parent = tglFrame
 
             local function setToggle(newVal: boolean)
@@ -726,6 +929,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             sldFrame.Size = UDim2.new(1, 0, 0, 48)
             sldFrame.BackgroundColor3 = Palette.ElementBg
             sldFrame.BorderSizePixel = 0
+            sldFrame.ZIndex = 16
             sldFrame.Parent = page
 
             local corner = Instance.new("UICorner")
@@ -747,6 +951,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 13
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = sldFrame
 
             local valLabel = Instance.new("TextLabel")
@@ -758,6 +963,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             valLabel.TextSize = 12
             valLabel.Font = Enum.Font.GothamBold
             valLabel.TextXAlignment = Enum.TextXAlignment.Right
+            valLabel.ZIndex = 17
             valLabel.Parent = sldFrame
 
             local track = Instance.new("Frame")
@@ -765,6 +971,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             track.Position = UDim2.new(0, 14, 0, 32)
             track.BackgroundColor3 = Palette.InputBg
             track.BorderSizePixel = 0
+            track.ZIndex = 17
             track.Parent = sldFrame
 
             local trackCorner = Instance.new("UICorner")
@@ -776,6 +983,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             fill.Size = UDim2.new(fraction, 0, 1, 0)
             fill.BackgroundColor3 = HoodUI.Accent
             fill.BorderSizePixel = 0
+            fill.ZIndex = 18
             fill.Parent = track
 
             local fillCorner = Instance.new("UICorner")
@@ -787,6 +995,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             knob.Position = UDim2.new(fraction, -6, 0.5, -6)
             knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             knob.BorderSizePixel = 0
+            knob.ZIndex = 19
             knob.Parent = track
 
             local knobCorner = Instance.new("UICorner")
@@ -798,6 +1007,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             hit.Position = UDim2.new(0, 0, 0, 24)
             hit.BackgroundTransparency = 1
             hit.Text = ""
+            hit.ZIndex = 20
             hit.Parent = sldFrame
 
             local isDragging = false
@@ -864,6 +1074,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             dropFrame.BackgroundColor3 = Palette.ElementBg
             dropFrame.BorderSizePixel = 0
             dropFrame.ClipsDescendants = true
+            dropFrame.ZIndex = 16
             dropFrame.Parent = page
 
             local corner = Instance.new("UICorner")
@@ -885,6 +1096,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 13
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = dropFrame
 
             local selectedLabel = Instance.new("TextLabel")
@@ -896,6 +1108,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             selectedLabel.TextSize = 12
             selectedLabel.Font = Enum.Font.Gotham
             selectedLabel.TextXAlignment = Enum.TextXAlignment.Right
+            selectedLabel.ZIndex = 17
             selectedLabel.Parent = dropFrame
 
             local chevron = Instance.new("TextLabel")
@@ -905,18 +1118,21 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             chevron.Text = "▼"
             chevron.TextColor3 = Palette.TextMuted
             chevron.TextSize = 10
+            chevron.ZIndex = 17
             chevron.Parent = dropFrame
 
             local headerHit = Instance.new("TextButton")
             headerHit.Size = UDim2.new(1, 0, 0, 38)
             headerHit.BackgroundTransparency = 1
             headerHit.Text = ""
+            headerHit.ZIndex = 18
             headerHit.Parent = dropFrame
 
             local optContainer = Instance.new("Frame")
             optContainer.Size = UDim2.new(1, -20, 0, #options.Options * 28)
             optContainer.Position = UDim2.new(0, 10, 0, 42)
             optContainer.BackgroundTransparency = 1
+            optContainer.ZIndex = 17
             optContainer.Parent = dropFrame
 
             local optLayout = Instance.new("UIListLayout")
@@ -937,6 +1153,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
                 optBtn.TextSize = 12
                 optBtn.Font = Enum.Font.Gotham
                 optBtn.TextXAlignment = Enum.TextXAlignment.Left
+                optBtn.ZIndex = 18
                 optBtn.Parent = optContainer
 
                 local optCorner = Instance.new("UICorner")
@@ -983,6 +1200,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             inFrame.Size = UDim2.new(1, 0, 0, 38)
             inFrame.BackgroundColor3 = Palette.ElementBg
             inFrame.BorderSizePixel = 0
+            inFrame.ZIndex = 16
             inFrame.Parent = page
 
             local corner = Instance.new("UICorner")
@@ -1004,6 +1222,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 13
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = inFrame
 
             local inputBg = Instance.new("Frame")
@@ -1011,6 +1230,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             inputBg.Position = UDim2.new(1, -164, 0.5, -12)
             inputBg.BackgroundColor3 = Palette.InputBg
             inputBg.BorderSizePixel = 0
+            inputBg.ZIndex = 17
             inputBg.Parent = inFrame
 
             local inputCorner = Instance.new("UICorner")
@@ -1033,6 +1253,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             textBox.TextSize = 12
             textBox.Font = Enum.Font.Gotham
             textBox.ClearTextOnFocus = false
+            textBox.ZIndex = 18
             textBox.Parent = inputBg
 
             textBox.Focused:Connect(function()
@@ -1061,6 +1282,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             kbFrame.Size = UDim2.new(1, 0, 0, 38)
             kbFrame.BackgroundColor3 = Palette.ElementBg
             kbFrame.BorderSizePixel = 0
+            kbFrame.ZIndex = 16
             kbFrame.Parent = page
 
             local corner = Instance.new("UICorner")
@@ -1082,6 +1304,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 13
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = kbFrame
 
             local keyBtn = Instance.new("TextButton")
@@ -1093,6 +1316,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             keyBtn.TextColor3 = Palette.TextPrimary
             keyBtn.TextSize = 11
             keyBtn.Font = Enum.Font.GothamBold
+            keyBtn.ZIndex = 17
             keyBtn.Parent = kbFrame
 
             local keyCorner = Instance.new("UICorner")
@@ -1143,6 +1367,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             card.Size = UDim2.new(1, 0, 0, 60)
             card.BackgroundColor3 = Palette.ElementBg
             card.BorderSizePixel = 0
+            card.ZIndex = 16
             card.Parent = page
 
             local corner = Instance.new("UICorner")
@@ -1164,6 +1389,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             title.TextSize = 13
             title.Font = Enum.Font.GothamBold
             title.TextXAlignment = Enum.TextXAlignment.Left
+            title.ZIndex = 17
             title.Parent = card
 
             local body = Instance.new("TextLabel")
@@ -1177,6 +1403,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
             body.TextWrapped = true
             body.TextXAlignment = Enum.TextXAlignment.Left
             body.TextYAlignment = Enum.TextYAlignment.Top
+            body.ZIndex = 17
             body.Parent = card
 
             table.insert(TabObj.Elements, card)
@@ -1191,6 +1418,7 @@ function HoodUI:CreateWindow(options: { Name: string?, LoadingSubtitle: string?,
 end
 
 function HoodUI:Destroy()
+    stopParticles()
     if self.ScreenGui then
         self.ScreenGui:Destroy()
         self.ScreenGui = nil
