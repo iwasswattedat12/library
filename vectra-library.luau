@@ -124,8 +124,91 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = GUI_NAME
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.DisplayOrder = 9999
+ScreenGui.DisplayOrder = 999999
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = TargetParent
+
+local DarkOverlay = Instance.new("Frame")
+DarkOverlay.Name = "DarkOverlay"
+DarkOverlay.Size = UDim2.new(1, 0, 1, 0)
+DarkOverlay.Position = UDim2.new(0, 0, 0, 0)
+DarkOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+DarkOverlay.BackgroundTransparency = 0.5
+DarkOverlay.BorderSizePixel = 0
+DarkOverlay.ZIndex = 0
+DarkOverlay.Parent = ScreenGui
+
+local ParticlesContainer = Instance.new("Frame")
+ParticlesContainer.Name = "ParticlesContainer"
+ParticlesContainer.Size = UDim2.new(1, 0, 1, 0)
+ParticlesContainer.Position = UDim2.new(0, 0, 0, 0)
+ParticlesContainer.BackgroundTransparency = 1
+ParticlesContainer.ClipsDescendants = false
+ParticlesContainer.ZIndex = 1
+ParticlesContainer.Parent = ScreenGui
+
+local particles = {}
+for i = 1, 65 do
+    local sz = math.random(8, 22)
+    local sq = Instance.new("Frame")
+    sq.Name = "Square_" .. i
+    sq.Size = UDim2.new(0, sz, 0, sz)
+    sq.AnchorPoint = Vector2.new(0.5, 0.5)
+    sq.BackgroundColor3 = Color3.fromRGB(225, 235, 255)
+    sq.BackgroundTransparency = math.random(55, 75) / 100
+    sq.BorderSizePixel = 0
+    sq.ZIndex = 1
+    sq.Parent = ParticlesContainer
+
+    local sqCorner = Instance.new("UICorner")
+    sqCorner.CornerRadius = UDim.new(0, 3)
+    sqCorner.Parent = sq
+
+    local sqStroke = Instance.new("UIStroke")
+    sqStroke.Color = Color3.fromRGB(240, 245, 255)
+    sqStroke.Thickness = 1
+    sqStroke.Transparency = math.random(60, 78) / 100
+    sqStroke.Parent = sq
+
+    local pData = {
+        frame = sq,
+        x = math.random() * 0.98 + 0.01,
+        y = math.random() * 1.15 - 0.1,
+        speedY = math.random(20, 70) / 1000,
+        driftX = (math.random() - 0.5) * 0.015,
+        rot = math.random(0, 360),
+        rotSpeed = (math.random() - 0.5) * 50
+    }
+    sq.Position = UDim2.new(pData.x, 0, pData.y, 0)
+    sq.Rotation = pData.rot
+    table.insert(particles, pData)
+end
+
+local particleConnection
+particleConnection = RunService.RenderStepped:Connect(function(dt)
+    if not ScreenGui or not ScreenGui.Parent or not ScreenGui.Enabled or not ParticlesContainer.Visible then
+        if particleConnection and (not ScreenGui or not ScreenGui.Parent) then
+            particleConnection:Disconnect()
+        end
+        return
+    end
+    for _, p in ipairs(particles) do
+        p.y = p.y + p.speedY * dt
+        p.x = p.x + p.driftX * dt
+        p.rot = p.rot + p.rotSpeed * dt
+        if p.y > 1.06 then
+            p.y = -0.06
+            p.x = math.random() * 0.98 + 0.01
+        end
+        if p.x < -0.05 then
+            p.x = 1.05
+        elseif p.x > 1.05 then
+            p.x = -0.05
+        end
+        p.frame.Position = UDim2.new(p.x, 0, p.y, 0)
+        p.frame.Rotation = p.rot
+    end
+end)
 
 local ToastContainer = Instance.new("Frame")
 ToastContainer.Name = "ToastContainer"
@@ -234,24 +317,11 @@ function Library:CreateWindow(config)
     local footerTitle = config.FooterTitle or "Vectra"
     local footerSubtitle = config.FooterSubtitle or getDetectedGameName()
     local windowSize = config.Size or UDim2.fromOffset(720, 460)
-    local toggleKey = config.ToggleKey or Library.ToggleKey
+    local toggleKey = config.ToggleKey or Library.ToggleKey or Enum.KeyCode.RightControl
 
     local Window = {
         Visible = true
     }
-
-    local ShadowFrame = Instance.new("Frame")
-    ShadowFrame.Name = "Shadow"
-    ShadowFrame.Size = UDim2.new(windowSize.X.Scale, windowSize.X.Offset + 24, windowSize.Y.Scale, windowSize.Y.Offset + 24)
-    ShadowFrame.Position = UDim2.new(0.5, -(windowSize.X.Offset + 24) / 2, 0.5, -(windowSize.Y.Offset + 24) / 2)
-    ShadowFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    ShadowFrame.BackgroundTransparency = 0.55
-    ShadowFrame.BorderSizePixel = 0
-    ShadowFrame.Parent = ScreenGui
-
-    local ShadowCorner = Instance.new("UICorner")
-    ShadowCorner.CornerRadius = UDim.new(0, 14)
-    ShadowCorner.Parent = ShadowFrame
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "WisperWindow"
@@ -271,23 +341,6 @@ function Library:CreateWindow(config)
     MainStroke.Thickness = 1.2
     MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     MainStroke.Parent = MainFrame
-
-    MainFrame:GetPropertyChangedSignal("Position"):Connect(function()
-        ShadowFrame.Position = UDim2.new(
-            MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset - 12,
-            MainFrame.Position.Y.Scale,
-            MainFrame.Position.Y.Offset - 12
-        )
-    end)
-    MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
-        ShadowFrame.Size = UDim2.new(
-            MainFrame.Size.X.Scale,
-            MainFrame.Size.X.Offset + 24,
-            MainFrame.Size.Y.Scale,
-            MainFrame.Size.Y.Offset + 24
-        )
-    end)
 
     local Topbar = Instance.new("Frame")
     Topbar.Name = "Topbar"
@@ -544,12 +597,6 @@ function Library:CreateWindow(config)
     TabLayout.Parent = TabContainer
 
     local function syncPositions()
-        ShadowFrame.Position = UDim2.new(
-            MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset - 12,
-            MainFrame.Position.Y.Scale,
-            MainFrame.Position.Y.Offset - 12
-        )
         TopSearchBar.Position = UDim2.new(
             MainFrame.Position.X.Scale,
             MainFrame.Position.X.Offset + (MainFrame.Size.X.Offset / 2),
@@ -565,14 +612,23 @@ function Library:CreateWindow(config)
     end
 
     MainFrame:GetPropertyChangedSignal("Position"):Connect(syncPositions)
-    MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
-        ShadowFrame.Size = UDim2.new(
-            MainFrame.Size.X.Scale,
-            MainFrame.Size.X.Offset + 24,
-            MainFrame.Size.Y.Scale,
-            MainFrame.Size.Y.Offset + 24
-        )
-        syncPositions()
+    MainFrame:GetPropertyChangedSignal("Size"):Connect(syncPositions)
+
+    local function setGuiVisible(visible)
+        Window.Visible = visible
+        MainFrame.Visible = visible
+        TopSearchBar.Visible = visible
+        BottomTabBar.Visible = visible
+        DarkOverlay.Visible = visible
+        ParticlesContainer.Visible = visible
+    end
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if input.KeyCode == toggleKey then
+            if not gameProcessed or input.KeyCode == Enum.KeyCode.RightControl or input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.Insert then
+                setGuiVisible(not Window.Visible)
+            end
+        end
     end)
 
     makeDraggable(TopSearchBar, MainFrame)
@@ -1530,6 +1586,18 @@ function Library:CreateWindow(config)
     function Window:CreateSection(sectionConfig, optionalSide)
         local targetTab = CurrentTab or getDefaultTab()
         return targetTab:CreateSection(sectionConfig, optionalSide)
+    end
+
+    function Window:Toggle(visible)
+        if visible == nil then
+            setGuiVisible(not Window.Visible)
+        else
+            setGuiVisible(visible)
+        end
+    end
+
+    function Window:SetToggleKey(newKey)
+        toggleKey = newKey
     end
 
     return Window
