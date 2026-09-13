@@ -414,7 +414,7 @@ function Library:CreateWindow(config)
 
     local FootTitle = Instance.new("TextLabel")
     FootTitle.Name = "Title"
-    FootTitle.Size = UDim2.new(0, 160, 0, 16)
+    FootTitle.Size = UDim2.new(1, -32, 0, 16)
     FootTitle.Position = UDim2.new(0, 16, 0, 7)
     FootTitle.BackgroundTransparency = 1
     FootTitle.Font = Enum.Font.GothamBold
@@ -427,7 +427,7 @@ function Library:CreateWindow(config)
 
     local FootSubtitle = Instance.new("TextLabel")
     FootSubtitle.Name = "Subtitle"
-    FootSubtitle.Size = UDim2.new(0, 160, 0, 14)
+    FootSubtitle.Size = UDim2.new(1, -32, 0, 14)
     FootSubtitle.Position = UDim2.new(0, 16, 0, 24)
     FootSubtitle.BackgroundTransparency = 1
     FootSubtitle.Font = Enum.Font.Gotham
@@ -438,27 +438,166 @@ function Library:CreateWindow(config)
     FootSubtitle.ZIndex = 22
     FootSubtitle.Parent = FooterBar
 
+    local TopSearchBar = Instance.new("Frame")
+    TopSearchBar.Name = "TopSearchBar"
+    TopSearchBar.Size = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 36)
+    TopSearchBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset - 44)
+    TopSearchBar.BackgroundColor3 = Library.Theme.MainBg
+    TopSearchBar.BorderSizePixel = 0
+    TopSearchBar.ZIndex = 25
+    TopSearchBar.Parent = ScreenGui
+
+    local SearchCorner = Instance.new("UICorner")
+    SearchCorner.CornerRadius = UDim.new(0, 8)
+    SearchCorner.Parent = TopSearchBar
+
+    local SearchStroke = Instance.new("UIStroke")
+    SearchStroke.Color = Library.Theme.CardBorder
+    SearchStroke.Thickness = 1.2
+    SearchStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    SearchStroke.Parent = TopSearchBar
+
+    local SearchIcon = Instance.new("TextLabel")
+    SearchIcon.Name = "Icon"
+    SearchIcon.Size = UDim2.new(0, 24, 1, 0)
+    SearchIcon.Position = UDim2.new(0, 14, 0, 0)
+    SearchIcon.BackgroundTransparency = 1
+    SearchIcon.Font = Enum.Font.GothamMedium
+    SearchIcon.Text = "🔍"
+    SearchIcon.TextColor3 = Library.Theme.TextMuted
+    SearchIcon.TextSize = 13
+    SearchIcon.ZIndex = 26
+    SearchIcon.Parent = TopSearchBar
+
+    local SearchInput = Instance.new("TextBox")
+    SearchInput.Name = "Input"
+    SearchInput.Size = UDim2.new(1, -70, 1, 0)
+    SearchInput.Position = UDim2.new(0, 42, 0, 0)
+    SearchInput.BackgroundTransparency = 1
+    SearchInput.Font = Enum.Font.Gotham
+    SearchInput.PlaceholderText = "Search features..."
+    SearchInput.PlaceholderColor3 = Library.Theme.TextMuted
+    SearchInput.Text = ""
+    SearchInput.TextColor3 = Library.Theme.TextWhite
+    SearchInput.TextSize = 12
+    SearchInput.TextXAlignment = Enum.TextXAlignment.Left
+    SearchInput.ClearTextOnFocus = false
+    SearchInput.ZIndex = 26
+    SearchInput.Parent = TopSearchBar
+
+    local ClearBtn = Instance.new("TextButton")
+    ClearBtn.Name = "Clear"
+    ClearBtn.Size = UDim2.new(0, 24, 0, 24)
+    ClearBtn.Position = UDim2.new(1, -34, 0.5, -12)
+    ClearBtn.BackgroundTransparency = 1
+    ClearBtn.Font = Enum.Font.GothamBold
+    ClearBtn.Text = "✕"
+    ClearBtn.TextColor3 = Library.Theme.TextMuted
+    ClearBtn.TextSize = 11
+    ClearBtn.Visible = false
+    ClearBtn.ZIndex = 26
+    ClearBtn.Parent = TopSearchBar
+
+    local BottomTabBar = Instance.new("Frame")
+    BottomTabBar.Name = "BottomTabBar"
+    BottomTabBar.Size = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 40)
+    BottomTabBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + windowSize.Y.Offset + 10)
+    BottomTabBar.BackgroundColor3 = Library.Theme.MainBg
+    BottomTabBar.BorderSizePixel = 0
+    BottomTabBar.ZIndex = 25
+    BottomTabBar.Parent = ScreenGui
+
+    local BottomCorner = Instance.new("UICorner")
+    BottomCorner.CornerRadius = UDim.new(0, 8)
+    BottomCorner.Parent = BottomTabBar
+
+    local BottomStroke = Instance.new("UIStroke")
+    BottomStroke.Color = Library.Theme.CardBorder
+    BottomStroke.Thickness = 1.2
+    BottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    BottomStroke.Parent = BottomTabBar
+
     local TabContainer = Instance.new("Frame")
     TabContainer.Name = "TabContainer"
-    TabContainer.Size = UDim2.new(1, -190, 1, 0)
-    TabContainer.Position = UDim2.new(0, 175, 0, 0)
+    TabContainer.Size = UDim2.new(1, -24, 1, 0)
+    TabContainer.Position = UDim2.new(0, 12, 0, 0)
     TabContainer.BackgroundTransparency = 1
-    TabContainer.Visible = true
-    TabContainer.ZIndex = 22
-    TabContainer.ClipsDescendants = false
-    TabContainer.Parent = FooterBar
+    TabContainer.ZIndex = 26
+    TabContainer.Parent = BottomTabBar
 
     local TabLayout = Instance.new("UIListLayout")
     TabLayout.FillDirection = Enum.FillDirection.Horizontal
-    TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
     TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabLayout.Padding = UDim.new(0, 6)
+    TabLayout.Padding = UDim.new(0, 8)
     TabLayout.Parent = TabContainer
 
-    local TabPadding = Instance.new("UIPadding")
-    TabPadding.PaddingRight = UDim.new(0, 16)
-    TabPadding.Parent = TabContainer
+    local function syncPositions()
+        ShadowFrame.Position = UDim2.new(
+            MainFrame.Position.X.Scale,
+            MainFrame.Position.X.Offset - 12,
+            MainFrame.Position.Y.Scale,
+            MainFrame.Position.Y.Offset - 12
+        )
+        TopSearchBar.Position = UDim2.new(
+            MainFrame.Position.X.Scale,
+            MainFrame.Position.X.Offset,
+            MainFrame.Position.Y.Scale,
+            MainFrame.Position.Y.Offset - 44
+        )
+        BottomTabBar.Position = UDim2.new(
+            MainFrame.Position.X.Scale,
+            MainFrame.Position.X.Offset,
+            MainFrame.Position.Y.Scale,
+            MainFrame.Position.Y.Offset + MainFrame.Size.Y.Offset + 10
+        )
+    end
+
+    MainFrame:GetPropertyChangedSignal("Position"):Connect(syncPositions)
+    MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
+        ShadowFrame.Size = UDim2.new(
+            MainFrame.Size.X.Scale,
+            MainFrame.Size.X.Offset + 24,
+            MainFrame.Size.Y.Scale,
+            MainFrame.Size.Y.Offset + 24
+        )
+        TopSearchBar.Size = UDim2.new(
+            MainFrame.Size.X.Scale,
+            MainFrame.Size.X.Offset,
+            0,
+            36
+        )
+        BottomTabBar.Size = UDim2.new(
+            MainFrame.Size.X.Scale,
+            MainFrame.Size.X.Offset,
+            0,
+            40
+        )
+        syncPositions()
+    end)
+
+    makeDraggable(TopSearchBar, MainFrame)
+    makeDraggable(BottomTabBar, MainFrame)
+
+    local allSearchableElements = {}
+
+    SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
+        local query = string.lower(SearchInput.Text)
+        ClearBtn.Visible = (query ~= "")
+        for _, item in ipairs(allSearchableElements) do
+            if query == "" then
+                item.Element.Visible = true
+            else
+                local match = string.find(string.lower(item.Name), query, 1, true) ~= nil
+                item.Element.Visible = match
+            end
+        end
+    end)
+
+    ClearBtn.MouseButton1Click:Connect(function()
+        SearchInput.Text = ""
+    end)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
@@ -482,6 +621,8 @@ function Library:CreateWindow(config)
             Window.Visible = not Window.Visible
             MainFrame.Visible = Window.Visible
             ShadowFrame.Visible = Window.Visible
+            TopSearchBar.Visible = Window.Visible
+            BottomTabBar.Visible = Window.Visible
         end
     end)
 
@@ -568,6 +709,7 @@ function Library:CreateWindow(config)
             ToggleRow.AutoButtonColor = false
             ToggleRow.Text = ""
             ToggleRow.Parent = SectionCard
+            table.insert(allSearchableElements, { Name = tglName, Element = ToggleRow })
 
             local Checkbox = Instance.new("Frame")
             Checkbox.Name = "Checkbox"
@@ -706,6 +848,7 @@ function Library:CreateWindow(config)
             SliderBox.Size = UDim2.new(1, 0, 0, 32)
             SliderBox.BackgroundTransparency = 1
             SliderBox.Parent = SectionCard
+            table.insert(allSearchableElements, { Name = sldName, Element = SliderBox })
 
             local Label = Instance.new("TextLabel")
             Label.Name = "Label"
@@ -840,6 +983,7 @@ function Library:CreateWindow(config)
             ButtonFrame.TextColor3 = Library.Theme.TextNormal
             ButtonFrame.TextSize = 12
             ButtonFrame.Parent = SectionCard
+            table.insert(allSearchableElements, { Name = btnName, Element = ButtonFrame })
 
             local BtnCorner = Instance.new("UICorner")
             BtnCorner.CornerRadius = UDim.new(0, 5)
@@ -888,6 +1032,7 @@ function Library:CreateWindow(config)
             DropdownFrame.BackgroundColor3 = Library.Theme.BtnBg
             DropdownFrame.ClipsDescendants = true
             DropdownFrame.Parent = SectionCard
+            table.insert(allSearchableElements, { Name = drpName, Element = DropdownFrame })
 
             local DrpCorner = Instance.new("UICorner")
             DrpCorner.CornerRadius = UDim.new(0, 5)
@@ -1008,6 +1153,7 @@ function Library:CreateWindow(config)
             InputFrame.Size = UDim2.new(1, 0, 0, 30)
             InputFrame.BackgroundColor3 = Library.Theme.BtnBg
             InputFrame.Parent = SectionCard
+            table.insert(allSearchableElements, { Name = inpName, Element = InputFrame })
 
             local InpCorner = Instance.new("UICorner")
             InpCorner.CornerRadius = UDim.new(0, 5)
@@ -1083,6 +1229,7 @@ function Library:CreateWindow(config)
             KeybindFrame.Size = UDim2.new(1, 0, 0, 26)
             KeybindFrame.BackgroundTransparency = 1
             KeybindFrame.Parent = SectionCard
+            table.insert(allSearchableElements, { Name = kbName, Element = KeybindFrame })
 
             local KbLabel = Instance.new("TextLabel")
             KbLabel.Size = UDim2.new(1, -60, 1, 0)
