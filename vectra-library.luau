@@ -500,8 +500,8 @@ function Library:CreateWindow(config)
 
     local BottomTabBar = Instance.new("Frame")
     BottomTabBar.Name = "BottomTabBar"
-    BottomTabBar.Size = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 40)
-    BottomTabBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + windowSize.Y.Offset + 10)
+    BottomTabBar.Size = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 34)
+    BottomTabBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + windowSize.Y.Offset + 8)
     BottomTabBar.BackgroundColor3 = Library.Theme.MainBg
     BottomTabBar.BorderSizePixel = 0
     BottomTabBar.ZIndex = 25
@@ -519,8 +519,8 @@ function Library:CreateWindow(config)
 
     local TabContainer = Instance.new("Frame")
     TabContainer.Name = "TabContainer"
-    TabContainer.Size = UDim2.new(1, -24, 1, 0)
-    TabContainer.Position = UDim2.new(0, 12, 0, 0)
+    TabContainer.Size = UDim2.new(1, -16, 1, 0)
+    TabContainer.Position = UDim2.new(0, 8, 0, 0)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ZIndex = 26
     TabContainer.Parent = BottomTabBar
@@ -530,7 +530,7 @@ function Library:CreateWindow(config)
     TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
     TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabLayout.Padding = UDim.new(0, 8)
+    TabLayout.Padding = UDim.new(0, 6)
     TabLayout.Parent = TabContainer
 
     local function syncPositions()
@@ -550,7 +550,7 @@ function Library:CreateWindow(config)
             MainFrame.Position.X.Scale,
             MainFrame.Position.X.Offset,
             MainFrame.Position.Y.Scale,
-            MainFrame.Position.Y.Offset + MainFrame.Size.Y.Offset + 10
+            MainFrame.Position.Y.Offset + MainFrame.Size.Y.Offset + 8
         )
     end
 
@@ -1411,17 +1411,17 @@ function Library:CreateWindow(config)
 
         local TabBtn = Instance.new("TextButton")
         TabBtn.Name = "TabBtn_" .. tabName
-        TabBtn.Size = UDim2.new(0, 0, 0, 26)
+        TabBtn.Size = UDim2.new(0, 0, 0, 22)
         TabBtn.AutomaticSize = Enum.AutomaticSize.X
-        TabBtn.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+        TabBtn.BackgroundColor3 = Library.Theme.Accent
         TabBtn.BackgroundTransparency = 1
         TabBtn.Text = ""
         TabBtn.AutoButtonColor = false
-        TabBtn.ZIndex = 23
+        TabBtn.ZIndex = 27
         TabBtn.Parent = TabContainer
 
         local TabBtnCorner = Instance.new("UICorner")
-        TabBtnCorner.CornerRadius = UDim.new(0, 6)
+        TabBtnCorner.CornerRadius = UDim.new(1, 0)
         TabBtnCorner.Parent = TabBtn
 
         local TabBtnStroke = Instance.new("UIStroke")
@@ -1442,8 +1442,8 @@ function Library:CreateWindow(config)
         TabBtnLabel.Font = Enum.Font.GothamMedium
         TabBtnLabel.Text = tabName
         TabBtnLabel.TextColor3 = Library.Theme.TextMuted
-        TabBtnLabel.TextSize = 12
-        TabBtnLabel.ZIndex = 24
+        TabBtnLabel.TextSize = 11
+        TabBtnLabel.ZIndex = 28
         TabBtnLabel.Parent = TabBtn
 
         local TabObj = {
@@ -1458,28 +1458,29 @@ function Library:CreateWindow(config)
             if CurrentTab == TabObj then return end
             if CurrentTab then
                 CurrentTab.Page.Visible = false
-                tween(CurrentTab.Button, TweenInfo.new(0.15), { BackgroundTransparency = 1 })
+                tween(CurrentTab.Button, TweenInfo.new(0.16), { BackgroundTransparency = 1 })
                 local oldStroke = CurrentTab.Button:FindFirstChildOfClass("UIStroke")
                 if oldStroke then
-                    tween(oldStroke, TweenInfo.new(0.15), { Transparency = 1 })
+                    tween(oldStroke, TweenInfo.new(0.16), { Transparency = 1 })
                 end
                 local oldLbl = CurrentTab.Button:FindFirstChild("Label")
                 if oldLbl then
                     oldLbl.Font = Enum.Font.GothamMedium
-                    tween(oldLbl, TweenInfo.new(0.15), { TextColor3 = Library.Theme.TextMuted })
+                    tween(oldLbl, TweenInfo.new(0.16), { TextColor3 = Library.Theme.TextMuted })
                 end
             end
             CurrentTab = TabObj
             TabObj.Page.Visible = true
-            tween(TabBtn, TweenInfo.new(0.15), { BackgroundTransparency = 0 })
-            tween(TabBtnStroke, TweenInfo.new(0.15), { Transparency = 0.5 })
+            TabBtn.BackgroundColor3 = Library.Theme.Accent
+            tween(TabBtn, TweenInfo.new(0.16), { BackgroundTransparency = 0 })
+            tween(TabBtnStroke, TweenInfo.new(0.16), { Transparency = 1 })
             TabBtnLabel.Font = Enum.Font.GothamBold
-            tween(TabBtnLabel, TweenInfo.new(0.15), { TextColor3 = Library.Theme.TextWhite })
+            tween(TabBtnLabel, TweenInfo.new(0.16), { TextColor3 = Color3.fromRGB(255, 255, 255) })
         end
 
         TabBtn.MouseEnter:Connect(function()
             if CurrentTab ~= TabObj then
-                tween(TabBtnLabel, TweenInfo.new(0.12), { TextColor3 = Library.Theme.TextNormal })
+                tween(TabBtnLabel, TweenInfo.new(0.12), { TextColor3 = Library.Theme.TextWhite })
             end
         end)
 
