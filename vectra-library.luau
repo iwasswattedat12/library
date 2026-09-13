@@ -44,7 +44,7 @@ if not success or not TargetParent then
 end
 
 local Library = {
-    ToggleKey = Enum.KeyCode.LeftControl,
+    ToggleKey = Enum.KeyCode.RightShift,
     Open = true,
     Windows = {},
     Theme = {
@@ -317,7 +317,7 @@ function Library:CreateWindow(config)
     local footerTitle = config.FooterTitle or "Vectra"
     local footerSubtitle = config.FooterSubtitle or getDetectedGameName()
     local windowSize = config.Size or UDim2.fromOffset(720, 460)
-    local toggleKey = config.ToggleKey or Library.ToggleKey or Enum.KeyCode.LeftControl
+    local toggleKey = config.ToggleKey or Library.ToggleKey or Enum.KeyCode.RightShift
 
     local Window = {
         Visible = true
@@ -648,11 +648,13 @@ function Library:CreateWindow(config)
             end
         end
 
-        -- Shift
-        if aName == "RightShift" or aName == "LeftShift" or aName == "Shift" then
-            if kName == "RightShift" or kName == "LeftShift" then
-                return true
-            end
+        -- Shift (RightShift and LeftShift are strictly distinct)
+        if aName == "RightShift" then
+            return kName == "RightShift"
+        elseif aName == "LeftShift" then
+            return kName == "LeftShift"
+        elseif aName == "Shift" then
+            return kName == "RightShift" or kName == "LeftShift"
         end
 
         -- Alt
@@ -669,7 +671,7 @@ function Library:CreateWindow(config)
         if Library._isBinding or (tick() - (Library._lastRebindTick or 0) < 0.3) then
             return
         end
-        local activeKey = Library.ToggleKey or toggleKey or Enum.KeyCode.LeftControl
+        local activeKey = Library.ToggleKey or toggleKey or Enum.KeyCode.RightShift
         if isMatchingKey(input, activeKey) then
             if not UserInputService:GetFocusedTextBox() then
                 setGuiVisible(not Window.Visible)
@@ -683,7 +685,7 @@ function Library:CreateWindow(config)
     CloseBtn.Position = UDim2.new(1, -34, 0.5, -11)
     CloseBtn.BackgroundColor3 = Library.Theme.BtnBg
     CloseBtn.BackgroundTransparency = 0.5
-    CloseBtn.Text = "X"
+    CloseBtn.Text = "✕"
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.TextColor3 = Library.Theme.TextMuted
     CloseBtn.TextSize = 11
@@ -1431,9 +1433,6 @@ function Library:CreateWindow(config)
                             key = nil
                         else
                             key = input.KeyCode
-                            if key == Enum.KeyCode.RightControl then
-                                key = Enum.KeyCode.LeftControl
-                            end
                         end
                     elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
                         key = Enum.UserInputType.MouseButton2
