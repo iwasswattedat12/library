@@ -440,15 +440,16 @@ function Library:CreateWindow(config)
 
     local TopSearchBar = Instance.new("Frame")
     TopSearchBar.Name = "TopSearchBar"
-    TopSearchBar.Size = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 36)
-    TopSearchBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset - 44)
+    TopSearchBar.AnchorPoint = Vector2.new(0.5, 1)
+    TopSearchBar.Size = UDim2.new(0, 240, 0, 28)
+    TopSearchBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset + (windowSize.X.Offset / 2), MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset - 8)
     TopSearchBar.BackgroundColor3 = Library.Theme.MainBg
     TopSearchBar.BorderSizePixel = 0
     TopSearchBar.ZIndex = 25
     TopSearchBar.Parent = ScreenGui
 
     local SearchCorner = Instance.new("UICorner")
-    SearchCorner.CornerRadius = UDim.new(0, 8)
+    SearchCorner.CornerRadius = UDim.new(1, 0)
     SearchCorner.Parent = TopSearchBar
 
     local SearchStroke = Instance.new("UIStroke")
@@ -459,27 +460,27 @@ function Library:CreateWindow(config)
 
     local SearchIcon = Instance.new("TextLabel")
     SearchIcon.Name = "Icon"
-    SearchIcon.Size = UDim2.new(0, 24, 1, 0)
-    SearchIcon.Position = UDim2.new(0, 14, 0, 0)
+    SearchIcon.Size = UDim2.new(0, 18, 1, 0)
+    SearchIcon.Position = UDim2.new(0, 10, 0, 0)
     SearchIcon.BackgroundTransparency = 1
     SearchIcon.Font = Enum.Font.GothamMedium
     SearchIcon.Text = "🔍"
     SearchIcon.TextColor3 = Library.Theme.TextMuted
-    SearchIcon.TextSize = 13
+    SearchIcon.TextSize = 11
     SearchIcon.ZIndex = 26
     SearchIcon.Parent = TopSearchBar
 
     local SearchInput = Instance.new("TextBox")
     SearchInput.Name = "Input"
-    SearchInput.Size = UDim2.new(1, -70, 1, 0)
-    SearchInput.Position = UDim2.new(0, 42, 0, 0)
+    SearchInput.Size = UDim2.new(1, -50, 1, 0)
+    SearchInput.Position = UDim2.new(0, 30, 0, 0)
     SearchInput.BackgroundTransparency = 1
     SearchInput.Font = Enum.Font.Gotham
-    SearchInput.PlaceholderText = "Search features..."
+    SearchInput.PlaceholderText = "Search..."
     SearchInput.PlaceholderColor3 = Library.Theme.TextMuted
     SearchInput.Text = ""
     SearchInput.TextColor3 = Library.Theme.TextWhite
-    SearchInput.TextSize = 12
+    SearchInput.TextSize = 11
     SearchInput.TextXAlignment = Enum.TextXAlignment.Left
     SearchInput.ClearTextOnFocus = false
     SearchInput.ZIndex = 26
@@ -487,28 +488,30 @@ function Library:CreateWindow(config)
 
     local ClearBtn = Instance.new("TextButton")
     ClearBtn.Name = "Clear"
-    ClearBtn.Size = UDim2.new(0, 24, 0, 24)
-    ClearBtn.Position = UDim2.new(1, -34, 0.5, -12)
+    ClearBtn.Size = UDim2.new(0, 16, 0, 16)
+    ClearBtn.Position = UDim2.new(1, -22, 0.5, -8)
     ClearBtn.BackgroundTransparency = 1
     ClearBtn.Font = Enum.Font.GothamBold
     ClearBtn.Text = "✕"
     ClearBtn.TextColor3 = Library.Theme.TextMuted
-    ClearBtn.TextSize = 11
+    ClearBtn.TextSize = 10
     ClearBtn.Visible = false
     ClearBtn.ZIndex = 26
     ClearBtn.Parent = TopSearchBar
 
     local BottomTabBar = Instance.new("Frame")
     BottomTabBar.Name = "BottomTabBar"
-    BottomTabBar.Size = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 34)
-    BottomTabBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + windowSize.Y.Offset + 8)
+    BottomTabBar.AnchorPoint = Vector2.new(0.5, 0)
+    BottomTabBar.Size = UDim2.new(0, 0, 0, 30)
+    BottomTabBar.AutomaticSize = Enum.AutomaticSize.X
+    BottomTabBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset + (windowSize.X.Offset / 2), MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + windowSize.Y.Offset + 8)
     BottomTabBar.BackgroundColor3 = Library.Theme.MainBg
     BottomTabBar.BorderSizePixel = 0
     BottomTabBar.ZIndex = 25
     BottomTabBar.Parent = ScreenGui
 
     local BottomCorner = Instance.new("UICorner")
-    BottomCorner.CornerRadius = UDim.new(0, 8)
+    BottomCorner.CornerRadius = UDim.new(1, 0)
     BottomCorner.Parent = BottomTabBar
 
     local BottomStroke = Instance.new("UIStroke")
@@ -517,10 +520,17 @@ function Library:CreateWindow(config)
     BottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     BottomStroke.Parent = BottomTabBar
 
+    local BottomBarPad = Instance.new("UIPadding")
+    BottomBarPad.PaddingLeft = UDim.new(0, 6)
+    BottomBarPad.PaddingRight = UDim.new(0, 6)
+    BottomBarPad.PaddingTop = UDim.new(0, 3)
+    BottomBarPad.PaddingBottom = UDim.new(0, 3)
+    BottomBarPad.Parent = BottomTabBar
+
     local TabContainer = Instance.new("Frame")
     TabContainer.Name = "TabContainer"
-    TabContainer.Size = UDim2.new(1, -16, 1, 0)
-    TabContainer.Position = UDim2.new(0, 8, 0, 0)
+    TabContainer.Size = UDim2.new(0, 0, 1, 0)
+    TabContainer.AutomaticSize = Enum.AutomaticSize.X
     TabContainer.BackgroundTransparency = 1
     TabContainer.ZIndex = 26
     TabContainer.Parent = BottomTabBar
@@ -530,7 +540,7 @@ function Library:CreateWindow(config)
     TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
     TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabLayout.Padding = UDim.new(0, 6)
+    TabLayout.Padding = UDim.new(0, 4)
     TabLayout.Parent = TabContainer
 
     local function syncPositions()
@@ -542,13 +552,13 @@ function Library:CreateWindow(config)
         )
         TopSearchBar.Position = UDim2.new(
             MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset,
+            MainFrame.Position.X.Offset + (MainFrame.Size.X.Offset / 2),
             MainFrame.Position.Y.Scale,
-            MainFrame.Position.Y.Offset - 44
+            MainFrame.Position.Y.Offset - 8
         )
         BottomTabBar.Position = UDim2.new(
             MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset,
+            MainFrame.Position.X.Offset + (MainFrame.Size.X.Offset / 2),
             MainFrame.Position.Y.Scale,
             MainFrame.Position.Y.Offset + MainFrame.Size.Y.Offset + 8
         )
@@ -561,18 +571,6 @@ function Library:CreateWindow(config)
             MainFrame.Size.X.Offset + 24,
             MainFrame.Size.Y.Scale,
             MainFrame.Size.Y.Offset + 24
-        )
-        TopSearchBar.Size = UDim2.new(
-            MainFrame.Size.X.Scale,
-            MainFrame.Size.X.Offset,
-            0,
-            36
-        )
-        BottomTabBar.Size = UDim2.new(
-            MainFrame.Size.X.Scale,
-            MainFrame.Size.X.Offset,
-            0,
-            40
         )
         syncPositions()
     end)
@@ -1500,6 +1498,10 @@ function Library:CreateWindow(config)
 
         if #Tabs == 1 then
             activate()
+            TabBtn.BackgroundColor3 = Library.Theme.Accent
+            TabBtn.BackgroundTransparency = 0
+            TabBtnLabel.Font = Enum.Font.GothamBold
+            TabBtnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
 
         return TabObj
