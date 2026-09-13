@@ -751,31 +751,44 @@ function Library:CreateWindow(config)
     ContentPadding.PaddingBottom = UDim.new(0, 10)
     ContentPadding.Parent = ContentScroll
 
-    UserInputService.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == toggleKey then
-            Window.Visible = not Window.Visible
-            MainFrame.Visible = Window.Visible
-            ShadowFrame.Visible = Window.Visible
-            TopSearchBar.Visible = Window.Visible
-            BottomTabBar.Visible = Window.Visible
-        end
-    end)
-
-    local function buildSection(sectionConfig, optionalSide, leftCol, rightCol)
+    local function buildSection(sectionConfig, optionalSide, leftCol, rightCol, tabObj)
         local sectionName = "Section"
-        local side = "Left"
+        local explicitSide = nil
 
         if type(sectionConfig) == "table" then
             sectionName = sectionConfig.Name or "Section"
-            side = sectionConfig.Side or optionalSide or "Left"
+            explicitSide = sectionConfig.Side or optionalSide
         elseif type(sectionConfig) == "string" then
             sectionName = sectionConfig
-            side = optionalSide or "Left"
+            explicitSide = optionalSide
+        end
+
+        local chosenSide = "Left"
+        if explicitSide then
+            if string.lower(tostring(explicitSide)) == "right" then
+                chosenSide = "Right"
+            else
+                chosenSide = "Left"
+            end
+        else
+            -- Automatically fit 2 in width (alternates between Left and Right)
+            if tabObj and (tabObj.RightCount or 0) < (tabObj.LeftCount or 0) then
+                chosenSide = "Right"
+            else
+                chosenSide = "Left"
+            end
         end
 
         local targetColumn = leftCol
-        if string.lower(tostring(side)) == "right" then
+        if chosenSide == "Right" then
             targetColumn = rightCol
+            if tabObj then
+                tabObj.RightCount = (tabObj.RightCount or 0) + 1
+            end
+        else
+            if tabObj then
+                tabObj.LeftCount = (tabObj.LeftCount or 0) + 1
+            end
         end
 
         local Section = {
@@ -1560,7 +1573,7 @@ function Library:CreateWindow(config)
 
         local LeftColumn = Instance.new("Frame")
         LeftColumn.Name = "LeftColumn"
-        LeftColumn.Size = UDim2.new(0.5, -5, 0, 0)
+        LeftColumn.Size = UDim2.new(0.5, -6, 0, 0)
         LeftColumn.Position = UDim2.new(0, 0, 0, 0)
         LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
         LeftColumn.BackgroundTransparency = 1
@@ -1573,8 +1586,8 @@ function Library:CreateWindow(config)
 
         local RightColumn = Instance.new("Frame")
         RightColumn.Name = "RightColumn"
-        RightColumn.Size = UDim2.new(0.5, -5, 0, 0)
-        RightColumn.Position = UDim2.new(0.5, 5, 0, 0)
+        RightColumn.Size = UDim2.new(0.5, -6, 0, 0)
+        RightColumn.Position = UDim2.new(0.5, 6, 0, 0)
         RightColumn.AutomaticSize = Enum.AutomaticSize.Y
         RightColumn.BackgroundTransparency = 1
         RightColumn.Parent = TabPage
@@ -1626,7 +1639,9 @@ function Library:CreateWindow(config)
             Page = TabPage,
             Button = TabBtn,
             LeftColumn = LeftColumn,
-            RightColumn = RightColumn
+            RightColumn = RightColumn,
+            LeftCount = 0,
+            RightCount = 0
         }
 
         local function activate()
@@ -1668,7 +1683,7 @@ function Library:CreateWindow(config)
         TabBtn.MouseButton1Click:Connect(activate)
 
         function TabObj:CreateSection(secConfig, secSide)
-            return buildSection(secConfig, secSide, LeftColumn, RightColumn)
+            return buildSection(secConfig, secSide, LeftColumn, RightColumn, TabObj)
         end
 
         table.insert(Tabs, TabObj)
