@@ -411,7 +411,7 @@ function Library:CreateWindow(config)
 
     local FootTitle = Instance.new("TextLabel")
     FootTitle.Name = "Title"
-    FootTitle.Size = UDim2.new(1, -32, 0, 16)
+    FootTitle.Size = UDim2.new(0, 180, 0, 16)
     FootTitle.Position = UDim2.new(0, 16, 0, 7)
     FootTitle.BackgroundTransparency = 1
     FootTitle.Font = Enum.Font.GothamBold
@@ -423,7 +423,7 @@ function Library:CreateWindow(config)
 
     local FootSubtitle = Instance.new("TextLabel")
     FootSubtitle.Name = "Subtitle"
-    FootSubtitle.Size = UDim2.new(1, -32, 0, 14)
+    FootSubtitle.Size = UDim2.new(0, 180, 0, 14)
     FootSubtitle.Position = UDim2.new(0, 16, 0, 24)
     FootSubtitle.BackgroundTransparency = 1
     FootSubtitle.Font = Enum.Font.Gotham
@@ -432,6 +432,26 @@ function Library:CreateWindow(config)
     FootSubtitle.TextSize = 11
     FootSubtitle.TextXAlignment = Enum.TextXAlignment.Left
     FootSubtitle.Parent = FooterBar
+
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Size = UDim2.new(1, -210, 1, 0)
+    TabContainer.Position = UDim2.new(0, 195, 0, 0)
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.Visible = false
+    TabContainer.Parent = FooterBar
+
+    local TabLayout = Instance.new("UIListLayout")
+    TabLayout.FillDirection = Enum.FillDirection.Horizontal
+    TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabLayout.Padding = UDim.new(0, 6)
+    TabLayout.Parent = TabContainer
+
+    local TabPadding = Instance.new("UIPadding")
+    TabPadding.PaddingRight = UDim.new(0, 16)
+    TabPadding.Parent = TabContainer
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
@@ -450,32 +470,6 @@ function Library:CreateWindow(config)
     ContentPadding.PaddingBottom = UDim.new(0, 10)
     ContentPadding.Parent = ContentScroll
 
-    local LeftColumn = Instance.new("Frame")
-    LeftColumn.Name = "LeftColumn"
-    LeftColumn.Size = UDim2.new(0.5, -5, 0, 0)
-    LeftColumn.Position = UDim2.new(0, 0, 0, 0)
-    LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
-    LeftColumn.BackgroundTransparency = 1
-    LeftColumn.Parent = ContentScroll
-
-    local LeftLayout = Instance.new("UIListLayout")
-    LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    LeftLayout.Padding = UDim.new(0, 10)
-    LeftLayout.Parent = LeftColumn
-
-    local RightColumn = Instance.new("Frame")
-    RightColumn.Name = "RightColumn"
-    RightColumn.Size = UDim2.new(0.5, -5, 0, 0)
-    RightColumn.Position = UDim2.new(0.5, 5, 0, 0)
-    RightColumn.AutomaticSize = Enum.AutomaticSize.Y
-    RightColumn.BackgroundTransparency = 1
-    RightColumn.Parent = ContentScroll
-
-    local RightLayout = Instance.new("UIListLayout")
-    RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    RightLayout.Padding = UDim.new(0, 10)
-    RightLayout.Parent = RightColumn
-
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == toggleKey then
             Window.Visible = not Window.Visible
@@ -484,7 +478,7 @@ function Library:CreateWindow(config)
         end
     end)
 
-    local function buildSection(sectionConfig, optionalSide)
+    local function buildSection(sectionConfig, optionalSide, leftCol, rightCol)
         local sectionName = "Section"
         local side = "Left"
 
@@ -496,9 +490,9 @@ function Library:CreateWindow(config)
             side = optionalSide or "Left"
         end
 
-        local targetColumn = LeftColumn
+        local targetColumn = leftCol
         if string.lower(tostring(side)) == "right" then
-            targetColumn = RightColumn
+            targetColumn = rightCol
         end
 
         local Section = {
@@ -1216,16 +1210,167 @@ function Library:CreateWindow(config)
         return Section
     end
 
-    function Window:CreateSection(sectionConfig, optionalSide)
-        return buildSection(sectionConfig, optionalSide)
+    local Tabs = {}
+    local CurrentTab = nil
+    local hasExplicitTabs = false
+
+    local function createTabInternal(tabConfig, isExplicit)
+        local tabName = (type(tabConfig) == "table" and tabConfig.Name) or tabConfig or "Tab"
+        if isExplicit then
+            hasExplicitTabs = true
+            TabContainer.Visible = true
+        end
+
+        local TabPage = Instance.new("Frame")
+        TabPage.Name = "TabPage_" .. tabName
+        TabPage.Size = UDim2.new(1, 0, 0, 0)
+        TabPage.AutomaticSize = Enum.AutomaticSize.Y
+        TabPage.BackgroundTransparency = 1
+        TabPage.Visible = false
+        TabPage.Parent = ContentScroll
+
+        local LeftColumn = Instance.new("Frame")
+        LeftColumn.Name = "LeftColumn"
+        LeftColumn.Size = UDim2.new(0.5, -5, 0, 0)
+        LeftColumn.Position = UDim2.new(0, 0, 0, 0)
+        LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
+        LeftColumn.BackgroundTransparency = 1
+        LeftColumn.Parent = TabPage
+
+        local LeftLayout = Instance.new("UIListLayout")
+        LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        LeftLayout.Padding = UDim.new(0, 10)
+        LeftLayout.Parent = LeftColumn
+
+        local RightColumn = Instance.new("Frame")
+        RightColumn.Name = "RightColumn"
+        RightColumn.Size = UDim2.new(0.5, -5, 0, 0)
+        RightColumn.Position = UDim2.new(0.5, 5, 0, 0)
+        RightColumn.AutomaticSize = Enum.AutomaticSize.Y
+        RightColumn.BackgroundTransparency = 1
+        RightColumn.Parent = TabPage
+
+        local RightLayout = Instance.new("UIListLayout")
+        RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        RightLayout.Padding = UDim.new(0, 10)
+        RightLayout.Parent = RightColumn
+
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Name = "TabBtn_" .. tabName
+        TabBtn.Size = UDim2.new(0, 0, 0, 26)
+        TabBtn.AutomaticSize = Enum.AutomaticSize.X
+        TabBtn.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+        TabBtn.BackgroundTransparency = 1
+        TabBtn.Text = ""
+        TabBtn.AutoButtonColor = false
+        TabBtn.Parent = TabContainer
+
+        local TabBtnCorner = Instance.new("UICorner")
+        TabBtnCorner.CornerRadius = UDim.new(0, 6)
+        TabBtnCorner.Parent = TabBtn
+
+        local TabBtnStroke = Instance.new("UIStroke")
+        TabBtnStroke.Color = Library.Theme.Accent
+        TabBtnStroke.Thickness = 1
+        TabBtnStroke.Transparency = 1
+        TabBtnStroke.Parent = TabBtn
+
+        local TabBtnPad = Instance.new("UIPadding")
+        TabBtnPad.PaddingLeft = UDim.new(0, 12)
+        TabBtnPad.PaddingRight = UDim.new(0, 12)
+        TabBtnPad.Parent = TabBtn
+
+        local TabBtnLabel = Instance.new("TextLabel")
+        TabBtnLabel.Name = "Label"
+        TabBtnLabel.Size = UDim2.new(1, 0, 1, 0)
+        TabBtnLabel.BackgroundTransparency = 1
+        TabBtnLabel.Font = Enum.Font.GothamMedium
+        TabBtnLabel.Text = tabName
+        TabBtnLabel.TextColor3 = Library.Theme.TextMuted
+        TabBtnLabel.TextSize = 12
+        TabBtnLabel.Parent = TabBtn
+
+        local TabObj = {
+            Name = tabName,
+            Page = TabPage,
+            Button = TabBtn,
+            LeftColumn = LeftColumn,
+            RightColumn = RightColumn
+        }
+
+        local function activate()
+            if CurrentTab == TabObj then return end
+            if CurrentTab then
+                CurrentTab.Page.Visible = false
+                tween(CurrentTab.Button, TweenInfo.new(0.15), { BackgroundTransparency = 1 })
+                local oldStroke = CurrentTab.Button:FindFirstChildOfClass("UIStroke")
+                if oldStroke then
+                    tween(oldStroke, TweenInfo.new(0.15), { Transparency = 1 })
+                end
+                local oldLbl = CurrentTab.Button:FindFirstChild("Label")
+                if oldLbl then
+                    oldLbl.Font = Enum.Font.GothamMedium
+                    tween(oldLbl, TweenInfo.new(0.15), { TextColor3 = Library.Theme.TextMuted })
+                end
+            end
+            CurrentTab = TabObj
+            TabObj.Page.Visible = true
+            tween(TabBtn, TweenInfo.new(0.15), { BackgroundTransparency = 0 })
+            tween(TabBtnStroke, TweenInfo.new(0.15), { Transparency = 0.5 })
+            TabBtnLabel.Font = Enum.Font.GothamBold
+            tween(TabBtnLabel, TweenInfo.new(0.15), { TextColor3 = Library.Theme.TextWhite })
+        end
+
+        TabBtn.MouseEnter:Connect(function()
+            if CurrentTab ~= TabObj then
+                tween(TabBtnLabel, TweenInfo.new(0.12), { TextColor3 = Library.Theme.TextNormal })
+            end
+        end)
+
+        TabBtn.MouseLeave:Connect(function()
+            if CurrentTab ~= TabObj then
+                tween(TabBtnLabel, TweenInfo.new(0.12), { TextColor3 = Library.Theme.TextMuted })
+            end
+        end)
+
+        TabBtn.MouseButton1Click:Connect(activate)
+
+        function TabObj:CreateSection(secConfig, secSide)
+            return buildSection(secConfig, secSide, LeftColumn, RightColumn)
+        end
+
+        table.insert(Tabs, TabObj)
+
+        if #Tabs == 1 then
+            activate()
+        end
+
+        return TabObj
+    end
+
+    local defaultTab = nil
+    local function getDefaultTab()
+        if not defaultTab then
+            defaultTab = createTabInternal("Main", false)
+        end
+        return defaultTab
     end
 
     function Window:CreateTab(tabConfig)
-        local Tab = {}
-        function Tab:CreateSection(sectionConfig, optionalSide)
-            return buildSection(sectionConfig, optionalSide)
+        if #Tabs == 1 and not hasExplicitTabs then
+            local firstTab = Tabs[1]
+            firstTab.Page:Destroy()
+            firstTab.Button:Destroy()
+            table.clear(Tabs)
+            CurrentTab = nil
+            defaultTab = nil
         end
-        return Tab
+        return createTabInternal(tabConfig, true)
+    end
+
+    function Window:CreateSection(sectionConfig, optionalSide)
+        local targetTab = CurrentTab or getDefaultTab()
+        return targetTab:CreateSection(sectionConfig, optionalSide)
     end
 
     return Window
