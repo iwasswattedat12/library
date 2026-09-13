@@ -616,6 +616,7 @@ function Library:CreateWindow(config)
 
     local function setGuiVisible(visible)
         Window.Visible = visible
+        ScreenGui.Enabled = visible
         MainFrame.Visible = visible
         TopSearchBar.Visible = visible
         BottomTabBar.Visible = visible
@@ -624,8 +625,9 @@ function Library:CreateWindow(config)
     end
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if input.KeyCode == toggleKey then
-            if not gameProcessed or input.KeyCode == Enum.KeyCode.RightControl or input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.Insert then
+        local activeKey = Library.ToggleKey or toggleKey or Enum.KeyCode.RightControl
+        if input.KeyCode == activeKey then
+            if not UserInputService:GetFocusedTextBox() then
                 setGuiVisible(not Window.Visible)
             end
         end
@@ -1286,7 +1288,7 @@ function Library:CreateWindow(config)
             table.insert(allSearchableElements, { Name = kbName, Element = KeybindFrame })
 
             local KbLabel = Instance.new("TextLabel")
-            KbLabel.Size = UDim2.new(1, -60, 1, 0)
+            KbLabel.Size = UDim2.new(1, -70, 1, 0)
             KbLabel.Position = UDim2.new(0, 0, 0, 0)
             KbLabel.BackgroundTransparency = 1
             KbLabel.Font = Enum.Font.GothamMedium
@@ -1298,8 +1300,10 @@ function Library:CreateWindow(config)
 
             local BindBtn = Instance.new("TextButton")
             BindBtn.Name = "BindBtn"
-            BindBtn.Size = UDim2.new(0, 44, 0, 20)
-            BindBtn.Position = UDim2.new(1, -44, 0.5, -10)
+            BindBtn.Size = UDim2.new(0, 0, 0, 20)
+            BindBtn.AutomaticSize = Enum.AutomaticSize.X
+            BindBtn.AnchorPoint = Vector2.new(1, 0.5)
+            BindBtn.Position = UDim2.new(1, 0, 0.5, 0)
             BindBtn.BackgroundColor3 = Library.Theme.BadgeBg
             BindBtn.Text = currentKey and currentKey.Name or "None"
             BindBtn.Font = Enum.Font.Gotham
@@ -1307,6 +1311,11 @@ function Library:CreateWindow(config)
             BindBtn.TextSize = 11
             BindBtn.AutoButtonColor = false
             BindBtn.Parent = KeybindFrame
+
+            local BindPad = Instance.new("UIPadding")
+            BindPad.PaddingLeft = UDim.new(0, 8)
+            BindPad.PaddingRight = UDim.new(0, 8)
+            BindPad.Parent = BindBtn
 
             local BindCorner = Instance.new("UICorner")
             BindCorner.CornerRadius = UDim.new(0, 4)
@@ -1334,15 +1343,18 @@ function Library:CreateWindow(config)
                             BindBtn.Text = currentKey.Name
                         end
                         binding = false
-                        tween(BadgeStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
+                        tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
                         connection:Disconnect()
+                        pcall(callback, currentKey)
                     end
                 end)
             end)
 
             UserInputService.InputBegan:Connect(function(input, processed)
-                if not processed and not binding and currentKey and input.KeyCode == currentKey then
-                    pcall(callback, currentKey)
+                if not binding and currentKey and input.KeyCode == currentKey then
+                    if not UserInputService:GetFocusedTextBox() then
+                        pcall(callback, currentKey)
+                    end
                 end
             end)
 
@@ -1350,6 +1362,7 @@ function Library:CreateWindow(config)
                 Set = function(self, key)
                     currentKey = key
                     BindBtn.Text = currentKey and currentKey.Name or "None"
+                    pcall(callback, currentKey)
                 end,
                 Value = function(self)
                     return currentKey
@@ -1598,6 +1611,7 @@ function Library:CreateWindow(config)
 
     function Window:SetToggleKey(newKey)
         toggleKey = newKey
+        Library.ToggleKey = newKey
     end
 
     return Window
