@@ -616,6 +616,7 @@ function Library:CreateWindow(config)
 
     local function setGuiVisible(visible)
         Window.Visible = visible
+        Library.Open = visible
         ScreenGui.Enabled = visible
         MainFrame.Visible = visible
         TopSearchBar.Visible = visible
@@ -624,13 +625,72 @@ function Library:CreateWindow(config)
         ParticlesContainer.Visible = visible
     end
 
+    local function isMatchingKey(input, activeKey)
+        if not activeKey then return false end
+        if input.KeyCode == activeKey then
+            return true
+        end
+        if input.UserInputType == activeKey then
+            return true
+        end
+        if (activeKey == Enum.KeyCode.RightControl or activeKey == Enum.KeyCode.LeftControl) then
+            if input.KeyCode == Enum.KeyCode.RightControl or input.KeyCode == Enum.KeyCode.LeftControl then
+                return true
+            end
+        end
+        if (activeKey == Enum.KeyCode.RightShift or activeKey == Enum.KeyCode.LeftShift) then
+            if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.LeftShift then
+                return true
+            end
+        end
+        if (activeKey == Enum.KeyCode.RightAlt or activeKey == Enum.KeyCode.LeftAlt) then
+            if input.KeyCode == Enum.KeyCode.RightAlt or input.KeyCode == Enum.KeyCode.LeftAlt then
+                return true
+            end
+        end
+        return false
+    end
+
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         local activeKey = Library.ToggleKey or toggleKey or Enum.KeyCode.RightControl
-        if input.KeyCode == activeKey then
+        if isMatchingKey(input, activeKey) then
             if not UserInputService:GetFocusedTextBox() then
                 setGuiVisible(not Window.Visible)
             end
         end
+    end)
+
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "CloseBtn"
+    CloseBtn.Size = UDim2.new(0, 22, 0, 22)
+    CloseBtn.Position = UDim2.new(1, -34, 0.5, -11)
+    CloseBtn.BackgroundColor3 = Library.Theme.BtnBg
+    CloseBtn.BackgroundTransparency = 0.5
+    CloseBtn.Text = "✕"
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextColor3 = Library.Theme.TextMuted
+    CloseBtn.TextSize = 11
+    CloseBtn.AutoButtonColor = false
+    CloseBtn.ZIndex = 5
+    CloseBtn.Parent = Topbar
+
+    local CloseBtnCorner = Instance.new("UICorner")
+    CloseBtnCorner.CornerRadius = UDim.new(1, 0)
+    CloseBtnCorner.Parent = CloseBtn
+
+    local CloseBtnStroke = Instance.new("UIStroke")
+    CloseBtnStroke.Color = Library.Theme.BtnBorder
+    CloseBtnStroke.Thickness = 1
+    CloseBtnStroke.Parent = CloseBtn
+
+    CloseBtn.MouseEnter:Connect(function()
+        tween(CloseBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0, TextColor3 = Color3.fromRGB(255, 100, 100) })
+    end)
+    CloseBtn.MouseLeave:Connect(function()
+        tween(CloseBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.5, TextColor3 = Library.Theme.TextMuted })
+    end)
+    CloseBtn.MouseButton1Click:Connect(function()
+        setGuiVisible(false)
     end)
 
     makeDraggable(TopSearchBar, MainFrame)
@@ -1333,27 +1393,43 @@ function Library:CreateWindow(config)
                 tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.Accent })
 
                 local connection
-                connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                connection = UserInputService.InputBegan:Connect(function(input)
+                    local key = nil
                     if input.UserInputType == Enum.UserInputType.Keyboard then
-                        if input.KeyCode == Enum.KeyCode.Escape then
-                            currentKey = nil
-                            BindBtn.Text = "None"
-                        elseif input.KeyCode ~= Enum.KeyCode.Unknown then
-                            currentKey = input.KeyCode
-                            BindBtn.Text = currentKey.Name
+                        if input.KeyCode == Enum.KeyCode.Unknown then
+                            return
                         end
-                        binding = false
-                        tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
-                        connection:Disconnect()
-                        pcall(callback, currentKey)
+                        if input.KeyCode == Enum.KeyCode.Escape then
+                            key = nil
+                        else
+                            key = input.KeyCode
+                        end
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        key = Enum.UserInputType.MouseButton2
+                    elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+                        key = Enum.UserInputType.MouseButton3
+                    else
+                        return
                     end
+
+                    currentKey = key
+                    BindBtn.Text = currentKey and currentKey.Name or "None"
+                    binding = false
+                    tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
+                    if connection then
+                        connection:Disconnect()
+                        connection = nil
+                    end
+                    pcall(callback, currentKey)
                 end)
             end)
 
             UserInputService.InputBegan:Connect(function(input, processed)
-                if not binding and currentKey and input.KeyCode == currentKey then
-                    if not UserInputService:GetFocusedTextBox() then
-                        pcall(callback, currentKey)
+                if not binding and currentKey then
+                    if (input.KeyCode == currentKey) or (input.UserInputType == currentKey) then
+                        if not UserInputService:GetFocusedTextBox() then
+                            pcall(callback, currentKey)
+                        end
                     end
                 end
             end)
