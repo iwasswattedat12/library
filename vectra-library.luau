@@ -617,35 +617,11 @@ function Library:CreateWindow(config)
     local function setGuiVisible(visible)
         Window.Visible = visible
         Library.Open = visible
-        MainFrame.Visible = visible
-        TopSearchBar.Visible = visible
-        BottomTabBar.Visible = visible
-        DarkOverlay.Visible = visible
-        ParticlesContainer.Visible = visible
-    end
-
-    local function isKeyDown(kc)
-        local ok, down = pcall(function()
-            return UserInputService:IsKeyDown(kc)
-        end)
-        return ok and down
-    end
-
-    local function isRightControlActive()
-        if isKeyDown(Enum.KeyCode.RightControl) then
-            return true
-        end
-        local ok, keys = pcall(function()
-            return UserInputService:GetKeysPressed()
-        end)
-        if ok and keys then
-            for _, k in ipairs(keys) do
-                if k.KeyCode == Enum.KeyCode.RightControl then
-                    return true
-                end
-            end
-        end
-        return false
+        if MainFrame then MainFrame.Visible = visible end
+        if TopSearchBar then TopSearchBar.Visible = visible end
+        if BottomTabBar then BottomTabBar.Visible = visible end
+        if DarkOverlay then DarkOverlay.Visible = visible end
+        if ParticlesContainer then ParticlesContainer.Visible = visible end
     end
 
     local function isMatchingKey(input, activeKey)
@@ -665,61 +641,22 @@ function Library:CreateWindow(config)
             return true
         end
 
-        -- Differentiate RightControl vs LeftControl
-        if aName == "RightControl" then
-            if kName == "RightControl" then
-                return true
-            end
-            if kName == "LeftControl" and isRightControlActive() then
-                return true
-            end
-            return false
-        elseif aName == "LeftControl" then
-            if kName == "LeftControl" and not isRightControlActive() then
-                return true
-            end
-            return false
-        elseif aName == "Control" or aName == "Ctrl" then
+        -- Both RightControl and LeftControl match whenever any Control key is used (Roblox engine compatibility)
+        if aName == "RightControl" or aName == "LeftControl" or aName == "Control" or aName == "Ctrl" then
             if kName == "RightControl" or kName == "LeftControl" then
                 return true
             end
         end
 
-        -- Differentiate RightShift vs LeftShift
-        if aName == "RightShift" then
-            if kName == "RightShift" then
-                return true
-            end
-            if kName == "LeftShift" and isKeyDown(Enum.KeyCode.RightShift) then
-                return true
-            end
-            return false
-        elseif aName == "LeftShift" then
-            if kName == "LeftShift" and not isKeyDown(Enum.KeyCode.RightShift) then
-                return true
-            end
-            return false
-        elseif aName == "Shift" then
+        -- Shift
+        if aName == "RightShift" or aName == "LeftShift" or aName == "Shift" then
             if kName == "RightShift" or kName == "LeftShift" then
                 return true
             end
         end
 
-        -- Differentiate RightAlt vs LeftAlt
-        if aName == "RightAlt" then
-            if kName == "RightAlt" then
-                return true
-            end
-            if kName == "LeftAlt" and isKeyDown(Enum.KeyCode.RightAlt) then
-                return true
-            end
-            return false
-        elseif aName == "LeftAlt" then
-            if kName == "LeftAlt" and not isKeyDown(Enum.KeyCode.RightAlt) then
-                return true
-            end
-            return false
-        elseif aName == "Alt" then
+        -- Alt
+        if aName == "RightAlt" or aName == "LeftAlt" or aName == "Alt" then
             if kName == "RightAlt" or kName == "LeftAlt" then
                 return true
             end
@@ -729,7 +666,7 @@ function Library:CreateWindow(config)
     end
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if Library._isBinding or (tick() - (Library._lastRebindTick or 0) < 0.45) then
+        if Library._isBinding or (tick() - (Library._lastRebindTick or 0) < 0.3) then
             return
         end
         local activeKey = Library.ToggleKey or toggleKey or Enum.KeyCode.RightControl
@@ -1494,12 +1431,8 @@ function Library:CreateWindow(config)
                             key = nil
                         else
                             key = input.KeyCode
-                            if key == Enum.KeyCode.LeftControl and isRightControlActive() then
+                            if key == Enum.KeyCode.LeftControl then
                                 key = Enum.KeyCode.RightControl
-                            elseif key == Enum.KeyCode.LeftShift and isKeyDown(Enum.KeyCode.RightShift) then
-                                key = Enum.KeyCode.RightShift
-                            elseif key == Enum.KeyCode.LeftAlt and isKeyDown(Enum.KeyCode.RightAlt) then
-                                key = Enum.KeyCode.RightAlt
                             end
                         end
                     elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
