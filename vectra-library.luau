@@ -387,6 +387,7 @@ function Library:CreateWindow(config)
     FooterBar.Position = UDim2.new(0, 0, 1, -46)
     FooterBar.BackgroundColor3 = Library.Theme.MainBg
     FooterBar.BorderSizePixel = 0
+    FooterBar.ZIndex = 20
     FooterBar.Parent = MainFrame
 
     local FooterCorner = Instance.new("UICorner")
@@ -399,6 +400,7 @@ function Library:CreateWindow(config)
     FooterPatch.Position = UDim2.new(0, 0, 0, 0)
     FooterPatch.BackgroundColor3 = Library.Theme.MainBg
     FooterPatch.BorderSizePixel = 0
+    FooterPatch.ZIndex = 20
     FooterPatch.Parent = FooterBar
 
     local FooterDivider = Instance.new("Frame")
@@ -407,11 +409,12 @@ function Library:CreateWindow(config)
     FooterDivider.Position = UDim2.new(0, 0, 0, 0)
     FooterDivider.BackgroundColor3 = Library.Theme.BorderDivider
     FooterDivider.BorderSizePixel = 0
+    FooterDivider.ZIndex = 21
     FooterDivider.Parent = FooterBar
 
     local FootTitle = Instance.new("TextLabel")
     FootTitle.Name = "Title"
-    FootTitle.Size = UDim2.new(0, 180, 0, 16)
+    FootTitle.Size = UDim2.new(0, 160, 0, 16)
     FootTitle.Position = UDim2.new(0, 16, 0, 7)
     FootTitle.BackgroundTransparency = 1
     FootTitle.Font = Enum.Font.GothamBold
@@ -419,11 +422,12 @@ function Library:CreateWindow(config)
     FootTitle.TextColor3 = Library.Theme.TextWhite
     FootTitle.TextSize = 13
     FootTitle.TextXAlignment = Enum.TextXAlignment.Left
+    FootTitle.ZIndex = 22
     FootTitle.Parent = FooterBar
 
     local FootSubtitle = Instance.new("TextLabel")
     FootSubtitle.Name = "Subtitle"
-    FootSubtitle.Size = UDim2.new(0, 180, 0, 14)
+    FootSubtitle.Size = UDim2.new(0, 160, 0, 14)
     FootSubtitle.Position = UDim2.new(0, 16, 0, 24)
     FootSubtitle.BackgroundTransparency = 1
     FootSubtitle.Font = Enum.Font.Gotham
@@ -431,14 +435,17 @@ function Library:CreateWindow(config)
     FootSubtitle.TextColor3 = Library.Theme.TextMuted
     FootSubtitle.TextSize = 11
     FootSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+    FootSubtitle.ZIndex = 22
     FootSubtitle.Parent = FooterBar
 
     local TabContainer = Instance.new("Frame")
     TabContainer.Name = "TabContainer"
-    TabContainer.Size = UDim2.new(1, -210, 1, 0)
-    TabContainer.Position = UDim2.new(0, 195, 0, 0)
+    TabContainer.Size = UDim2.new(1, -190, 1, 0)
+    TabContainer.Position = UDim2.new(0, 175, 0, 0)
     TabContainer.BackgroundTransparency = 1
-    TabContainer.Visible = false
+    TabContainer.Visible = true
+    TabContainer.ZIndex = 22
+    TabContainer.ClipsDescendants = false
     TabContainer.Parent = FooterBar
 
     local TabLayout = Instance.new("UIListLayout")
@@ -1263,6 +1270,7 @@ function Library:CreateWindow(config)
         TabBtn.BackgroundTransparency = 1
         TabBtn.Text = ""
         TabBtn.AutoButtonColor = false
+        TabBtn.ZIndex = 23
         TabBtn.Parent = TabContainer
 
         local TabBtnCorner = Instance.new("UICorner")
@@ -1288,6 +1296,7 @@ function Library:CreateWindow(config)
         TabBtnLabel.Text = tabName
         TabBtnLabel.TextColor3 = Library.Theme.TextMuted
         TabBtnLabel.TextSize = 12
+        TabBtnLabel.ZIndex = 24
         TabBtnLabel.Parent = TabBtn
 
         local TabObj = {
