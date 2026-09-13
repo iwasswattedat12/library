@@ -3,8 +3,36 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local LocalPlayer = Players.LocalPlayer
+
+local function getDetectedExecutor()
+    local name = "Unknown Executor"
+    local ver = ""
+    pcall(function()
+        if type(identifyexecutor) == "function" then
+            name, ver = identifyexecutor()
+        elseif type(getexecutorname) == "function" then
+            name = getexecutorname()
+        end
+    end)
+    if ver and ver ~= "" then
+        return tostring(name) .. " " .. tostring(ver)
+    end
+    return tostring(name)
+end
+
+local function getDetectedGameName()
+    local gameName = "Universal"
+    pcall(function()
+        local info = MarketplaceService:GetProductInfo(game.PlaceId)
+        if info and info.Name then
+            gameName = info.Name
+        end
+    end)
+    return gameName
+end
 
 local TargetParent
 local success = pcall(function()
@@ -202,9 +230,9 @@ end
 function Library:CreateWindow(config)
     config = config or {}
     local windowTitle = config.Title or "******"
-    local windowSubtitle = config.Subtitle or "Nexomia.win 0.0.1"
-    local footerTitle = config.FooterTitle or "Wisper Hub"
-    local footerSubtitle = config.FooterSubtitle or "Basketball: Zero (< Lvl 5)"
+    local windowSubtitle = config.Subtitle or getDetectedExecutor()
+    local footerTitle = config.FooterTitle or "Vectra"
+    local footerSubtitle = config.FooterSubtitle or getDetectedGameName()
     local windowSize = config.Size or UDim2.fromOffset(720, 460)
     local toggleKey = config.ToggleKey or Library.ToggleKey
 
@@ -280,17 +308,64 @@ function Library:CreateWindow(config)
     TopbarPatch.BorderSizePixel = 0
     TopbarPatch.Parent = Topbar
 
+    local targetUsername = (LocalPlayer and LocalPlayer.Name) or "User"
+    local isTitleHovered = false
+    local titleAnimThread = nil
+
+    local TitleHitbox = Instance.new("TextButton")
+    TitleHitbox.Name = "TitleInteractive"
+    TitleHitbox.Size = UDim2.new(0, 200, 0, 18)
+    TitleHitbox.Position = UDim2.new(0, 16, 0, 9)
+    TitleHitbox.BackgroundTransparency = 1
+    TitleHitbox.Text = ""
+    TitleHitbox.AutoButtonColor = false
+    TitleHitbox.Parent = Topbar
+
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Name = "Title"
-    TitleLabel.Size = UDim2.new(1, -32, 0, 16)
-    TitleLabel.Position = UDim2.new(0, 16, 0, 10)
+    TitleLabel.Size = UDim2.new(1, 0, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 0, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.Text = windowTitle
     TitleLabel.TextColor3 = Library.Theme.TextWhite
     TitleLabel.TextSize = 14
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Parent = Topbar
+    TitleLabel.Parent = TitleHitbox
+
+    local function animateTitleText(toText)
+        if titleAnimThread then
+            task.cancel(titleAnimThread)
+            titleAnimThread = nil
+        end
+        titleAnimThread = task.spawn(function()
+            local chars = "!@#$%&*?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+            local len = #toText
+            local steps = 10
+            for i = 1, steps do
+                local progress = i / steps
+                local revealed = math.floor(progress * len)
+                local str = string.sub(toText, 1, revealed)
+                for _ = revealed + 1, len do
+                    local r = math.random(1, #chars)
+                    str = str .. string.sub(chars, r, r)
+                end
+                TitleLabel.Text = str
+                task.wait(0.02)
+            end
+            TitleLabel.Text = toText
+        end)
+    end
+
+    TitleHitbox.MouseEnter:Connect(function()
+        isTitleHovered = true
+        animateTitleText(targetUsername)
+    end)
+
+    TitleHitbox.MouseLeave:Connect(function()
+        isTitleHovered = false
+        animateTitleText(windowTitle)
+    end)
 
     local SubtitleLabel = Instance.new("TextLabel")
     SubtitleLabel.Name = "Subtitle"
@@ -377,7 +452,7 @@ function Library:CreateWindow(config)
 
     local LeftColumn = Instance.new("Frame")
     LeftColumn.Name = "LeftColumn"
-    LeftColumn.Size = UDim2.new(0.5, -6, 0, 0)
+    LeftColumn.Size = UDim2.new(0.5, -5, 0, 0)
     LeftColumn.Position = UDim2.new(0, 0, 0, 0)
     LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
     LeftColumn.BackgroundTransparency = 1
@@ -385,20 +460,20 @@ function Library:CreateWindow(config)
 
     local LeftLayout = Instance.new("UIListLayout")
     LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    LeftLayout.Padding = UDim.new(0, 12)
+    LeftLayout.Padding = UDim.new(0, 10)
     LeftLayout.Parent = LeftColumn
 
     local RightColumn = Instance.new("Frame")
     RightColumn.Name = "RightColumn"
-    RightColumn.Size = UDim2.new(0.5, -6, 0, 0)
-    RightColumn.Position = UDim2.new(0.5, 6, 0, 0)
+    RightColumn.Size = UDim2.new(0.5, -5, 0, 0)
+    RightColumn.Position = UDim2.new(0.5, 5, 0, 0)
     RightColumn.AutomaticSize = Enum.AutomaticSize.Y
     RightColumn.BackgroundTransparency = 1
     RightColumn.Parent = ContentScroll
 
     local RightLayout = Instance.new("UIListLayout")
     RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    RightLayout.Padding = UDim.new(0, 12)
+    RightLayout.Padding = UDim.new(0, 10)
     RightLayout.Parent = RightColumn
 
     UserInputService.InputBegan:Connect(function(input, processed)
