@@ -205,7 +205,7 @@ function Library:CreateWindow(config)
     local windowSubtitle = config.Subtitle or "Nexomia.win 0.0.1"
     local footerTitle = config.FooterTitle or "Wisper Hub"
     local footerSubtitle = config.FooterSubtitle or "Basketball: Zero (< Lvl 5)"
-    local windowSize = config.Size or UDim2.fromOffset(780, 540)
+    local windowSize = config.Size or UDim2.fromOffset(720, 460)
     local toggleKey = config.ToggleKey or Library.ToggleKey
 
     local Window = {
@@ -263,7 +263,7 @@ function Library:CreateWindow(config)
 
     local Topbar = Instance.new("Frame")
     Topbar.Name = "Topbar"
-    Topbar.Size = UDim2.new(1, 0, 0, 54)
+    Topbar.Size = UDim2.new(1, 0, 0, 48)
     Topbar.BackgroundColor3 = Library.Theme.MainBg
     Topbar.BorderSizePixel = 0
     Topbar.Parent = MainFrame
@@ -282,20 +282,20 @@ function Library:CreateWindow(config)
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Name = "Title"
-    TitleLabel.Size = UDim2.new(1, -36, 0, 18)
-    TitleLabel.Position = UDim2.new(0, 18, 0, 10)
+    TitleLabel.Size = UDim2.new(1, -32, 0, 16)
+    TitleLabel.Position = UDim2.new(0, 16, 0, 10)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.Text = windowTitle
     TitleLabel.TextColor3 = Library.Theme.TextWhite
-    TitleLabel.TextSize = 15
+    TitleLabel.TextSize = 14
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = Topbar
 
     local SubtitleLabel = Instance.new("TextLabel")
     SubtitleLabel.Name = "Subtitle"
-    SubtitleLabel.Size = UDim2.new(1, -36, 0, 14)
-    SubtitleLabel.Position = UDim2.new(0, 18, 0, 30)
+    SubtitleLabel.Size = UDim2.new(1, -32, 0, 14)
+    SubtitleLabel.Position = UDim2.new(0, 16, 0, 27)
     SubtitleLabel.BackgroundTransparency = 1
     SubtitleLabel.Font = Enum.Font.Gotham
     SubtitleLabel.Text = windowSubtitle
@@ -308,8 +308,8 @@ function Library:CreateWindow(config)
 
     local FooterBar = Instance.new("Frame")
     FooterBar.Name = "FooterBar"
-    FooterBar.Size = UDim2.new(1, 0, 0, 48)
-    FooterBar.Position = UDim2.new(0, 0, 1, -48)
+    FooterBar.Size = UDim2.new(1, 0, 0, 46)
+    FooterBar.Position = UDim2.new(0, 0, 1, -46)
     FooterBar.BackgroundColor3 = Library.Theme.MainBg
     FooterBar.BorderSizePixel = 0
     FooterBar.Parent = MainFrame
@@ -336,20 +336,20 @@ function Library:CreateWindow(config)
 
     local FootTitle = Instance.new("TextLabel")
     FootTitle.Name = "Title"
-    FootTitle.Size = UDim2.new(1, -36, 0, 16)
-    FootTitle.Position = UDim2.new(0, 18, 0, 8)
+    FootTitle.Size = UDim2.new(1, -32, 0, 16)
+    FootTitle.Position = UDim2.new(0, 16, 0, 7)
     FootTitle.BackgroundTransparency = 1
     FootTitle.Font = Enum.Font.GothamBold
     FootTitle.Text = footerTitle
     FootTitle.TextColor3 = Library.Theme.TextWhite
-    FootTitle.TextSize = 14
+    FootTitle.TextSize = 13
     FootTitle.TextXAlignment = Enum.TextXAlignment.Left
     FootTitle.Parent = FooterBar
 
     local FootSubtitle = Instance.new("TextLabel")
     FootSubtitle.Name = "Subtitle"
-    FootSubtitle.Size = UDim2.new(1, -36, 0, 14)
-    FootSubtitle.Position = UDim2.new(0, 18, 0, 26)
+    FootSubtitle.Size = UDim2.new(1, -32, 0, 14)
+    FootSubtitle.Position = UDim2.new(0, 16, 0, 24)
     FootSubtitle.BackgroundTransparency = 1
     FootSubtitle.Font = Enum.Font.Gotham
     FootSubtitle.Text = footerSubtitle
@@ -360,26 +360,24 @@ function Library:CreateWindow(config)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
-    ContentScroll.Size = UDim2.new(1, 0, 1, -102)
-    ContentScroll.Position = UDim2.new(0, 0, 0, 54)
+    ContentScroll.Size = UDim2.new(1, -32, 1, -94)
+    ContentScroll.Position = UDim2.new(0, 16, 0, 48)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
-    ContentScroll.ScrollBarThickness = 3
-    ContentScroll.ScrollBarImageColor3 = Library.Theme.CardBorder
+    ContentScroll.ScrollBarThickness = 0
+    ContentScroll.VerticalScrollBarInset = Enum.ScrollBarInset.None
     ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     ContentScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     ContentScroll.Parent = MainFrame
 
     local ContentPadding = Instance.new("UIPadding")
-    ContentPadding.PaddingTop = UDim.new(0, 6)
-    ContentPadding.PaddingBottom = UDim.new(0, 14)
-    ContentPadding.PaddingLeft = UDim.new(0, 16)
-    ContentPadding.PaddingRight = UDim.new(0, 16)
+    ContentPadding.PaddingTop = UDim.new(0, 4)
+    ContentPadding.PaddingBottom = UDim.new(0, 10)
     ContentPadding.Parent = ContentScroll
 
     local LeftColumn = Instance.new("Frame")
     LeftColumn.Name = "LeftColumn"
-    LeftColumn.Size = UDim2.new(0.5, -7, 0, 0)
+    LeftColumn.Size = UDim2.new(0.5, -6, 0, 0)
     LeftColumn.Position = UDim2.new(0, 0, 0, 0)
     LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
     LeftColumn.BackgroundTransparency = 1
@@ -387,20 +385,20 @@ function Library:CreateWindow(config)
 
     local LeftLayout = Instance.new("UIListLayout")
     LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    LeftLayout.Padding = UDim.new(0, 14)
+    LeftLayout.Padding = UDim.new(0, 12)
     LeftLayout.Parent = LeftColumn
 
     local RightColumn = Instance.new("Frame")
     RightColumn.Name = "RightColumn"
-    RightColumn.Size = UDim2.new(0.5, -7, 0, 0)
-    RightColumn.Position = UDim2.new(0.5, 7, 0, 0)
+    RightColumn.Size = UDim2.new(0.5, -6, 0, 0)
+    RightColumn.Position = UDim2.new(0.5, 6, 0, 0)
     RightColumn.AutomaticSize = Enum.AutomaticSize.Y
     RightColumn.BackgroundTransparency = 1
     RightColumn.Parent = ContentScroll
 
     local RightLayout = Instance.new("UIListLayout")
     RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    RightLayout.Padding = UDim.new(0, 14)
+    RightLayout.Padding = UDim.new(0, 12)
     RightLayout.Parent = RightColumn
 
     UserInputService.InputBegan:Connect(function(input, processed)
@@ -452,15 +450,15 @@ function Library:CreateWindow(config)
         CardStroke.Parent = SectionCard
 
         local CardPadding = Instance.new("UIPadding")
-        CardPadding.PaddingTop = UDim.new(0, 14)
-        CardPadding.PaddingBottom = UDim.new(0, 16)
-        CardPadding.PaddingLeft = UDim.new(0, 14)
-        CardPadding.PaddingRight = UDim.new(0, 14)
+        CardPadding.PaddingTop = UDim.new(0, 12)
+        CardPadding.PaddingBottom = UDim.new(0, 14)
+        CardPadding.PaddingLeft = UDim.new(0, 12)
+        CardPadding.PaddingRight = UDim.new(0, 12)
         CardPadding.Parent = SectionCard
 
         local CardLayout = Instance.new("UIListLayout")
         CardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        CardLayout.Padding = UDim.new(0, 10)
+        CardLayout.Padding = UDim.new(0, 9)
         CardLayout.Parent = SectionCard
 
         local HeaderTitle = Instance.new("TextLabel")
@@ -470,7 +468,7 @@ function Library:CreateWindow(config)
         HeaderTitle.Font = Enum.Font.GothamBold
         HeaderTitle.Text = sectionName
         HeaderTitle.TextColor3 = Library.Theme.TextWhite
-        HeaderTitle.TextSize = 14
+        HeaderTitle.TextSize = 13
         HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
         HeaderTitle.LayoutOrder = 0
         HeaderTitle.Parent = SectionCard
@@ -489,7 +487,7 @@ function Library:CreateWindow(config)
 
             local ToggleRow = Instance.new("TextButton")
             ToggleRow.Name = "Toggle_" .. tglName
-            ToggleRow.Size = UDim2.new(1, 0, 0, 24)
+            ToggleRow.Size = UDim2.new(1, 0, 0, 20)
             ToggleRow.BackgroundTransparency = 1
             ToggleRow.AutoButtonColor = false
             ToggleRow.Text = ""
@@ -497,8 +495,8 @@ function Library:CreateWindow(config)
 
             local Checkbox = Instance.new("Frame")
             Checkbox.Name = "Checkbox"
-            Checkbox.Size = UDim2.new(0, 18, 0, 18)
-            Checkbox.Position = UDim2.new(0, 0, 0.5, -9)
+            Checkbox.Size = UDim2.new(0, 16, 0, 16)
+            Checkbox.Position = UDim2.new(0, 0, 0.5, -8)
             Checkbox.BackgroundColor3 = state and Library.Theme.BoxChecked or Library.Theme.BoxBg
             Checkbox.BorderSizePixel = 0
             Checkbox.Parent = ToggleRow
@@ -519,31 +517,31 @@ function Library:CreateWindow(config)
             Checkmark.Font = Enum.Font.GothamBold
             Checkmark.Text = "✓"
             Checkmark.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Checkmark.TextSize = 12
+            Checkmark.TextSize = 11
             Checkmark.Visible = state
             Checkmark.Parent = Checkbox
 
             local Label = Instance.new("TextLabel")
             Label.Name = "Label"
-            Label.Size = UDim2.new(1, -72, 1, 0)
-            Label.Position = UDim2.new(0, 28, 0, 0)
+            Label.Size = UDim2.new(1, -70, 1, 0)
+            Label.Position = UDim2.new(0, 24, 0, 0)
             Label.BackgroundTransparency = 1
             Label.Font = Enum.Font.GothamMedium
             Label.Text = tglName
             Label.TextColor3 = state and Library.Theme.TextWhite or Library.Theme.TextNormal
-            Label.TextSize = 13
+            Label.TextSize = 12
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.Parent = ToggleRow
 
             local KeybindBadge = Instance.new("TextButton")
             KeybindBadge.Name = "KeybindBadge"
-            KeybindBadge.Size = UDim2.new(0, 44, 0, 20)
-            KeybindBadge.Position = UDim2.new(1, -44, 0.5, -10)
+            KeybindBadge.Size = UDim2.new(0, 42, 0, 18)
+            KeybindBadge.Position = UDim2.new(1, -42, 0.5, -9)
             KeybindBadge.BackgroundColor3 = Library.Theme.BadgeBg
             KeybindBadge.Text = currentKey and currentKey.Name or "None"
             KeybindBadge.Font = Enum.Font.Gotham
             KeybindBadge.TextColor3 = Library.Theme.BadgeText
-            KeybindBadge.TextSize = 11
+            KeybindBadge.TextSize = 10
             KeybindBadge.AutoButtonColor = false
             KeybindBadge.Parent = ToggleRow
 
@@ -629,7 +627,7 @@ function Library:CreateWindow(config)
 
             local SliderBox = Instance.new("Frame")
             SliderBox.Name = "Slider_" .. sldName
-            SliderBox.Size = UDim2.new(1, 0, 0, 42)
+            SliderBox.Size = UDim2.new(1, 0, 0, 32)
             SliderBox.BackgroundTransparency = 1
             SliderBox.Parent = SectionCard
 
@@ -653,14 +651,14 @@ function Library:CreateWindow(config)
             ValueLabel.Font = Enum.Font.GothamBold
             ValueLabel.Text = tostring(value) .. suffix
             ValueLabel.TextColor3 = Library.Theme.TextWhite
-            ValueLabel.TextSize = 13
+            ValueLabel.TextSize = 12
             ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
             ValueLabel.Parent = SliderBox
 
             local Track = Instance.new("Frame")
             Track.Name = "Track"
-            Track.Size = UDim2.new(1, 0, 0, 8)
-            Track.Position = UDim2.new(0, 0, 0, 24)
+            Track.Size = UDim2.new(1, 0, 0, 5)
+            Track.Position = UDim2.new(0, 0, 0, 21)
             Track.BackgroundColor3 = Library.Theme.SliderTrack
             Track.BorderSizePixel = 0
             Track.Parent = SliderBox
@@ -683,12 +681,12 @@ function Library:CreateWindow(config)
 
             local Thumb = Instance.new("Frame")
             Thumb.Name = "Thumb"
-            Thumb.Size = UDim2.new(0, 12, 0, 12)
-            Thumb.Position = UDim2.new(1, 0, 0.5, 0)
-            Thumb.AnchorPoint = Vector2.new(0.5, 0.5)
+            Thumb.Size = UDim2.new(0, 11, 0, 11)
+            Thumb.Position = UDim2.new(initPercent, 0, 0.5, 0)
+            Thumb.AnchorPoint = Vector2.new(initPercent, 0.5)
             Thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             Thumb.BorderSizePixel = 0
-            Thumb.Parent = Fill
+            Thumb.Parent = Track
 
             local ThumbCorner = Instance.new("UICorner")
             ThumbCorner.CornerRadius = UDim.new(1, 0)
@@ -708,16 +706,21 @@ function Library:CreateWindow(config)
 
                 local clampedPercent = math.clamp((value - min) / (max - min), 0, 1)
                 tween(Fill, TweenInfo.new(0.04), { Size = UDim2.new(clampedPercent, 0, 1, 0) })
+                Thumb.Position = UDim2.new(clampedPercent, 0, 0.5, 0)
+                Thumb.AnchorPoint = Vector2.new(clampedPercent, 0.5)
                 ValueLabel.Text = tostring(value) .. suffix
                 pcall(callback, value)
             end
 
-            Track.InputBegan:Connect(function(input)
+            local function startDrag(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
                     updateSlider(input)
                 end
-            end)
+            end
+
+            Track.InputBegan:Connect(startDrag)
+            SliderBox.InputBegan:Connect(startDrag)
 
             UserInputService.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -736,6 +739,8 @@ function Library:CreateWindow(config)
                     value = math.clamp(val, min, max)
                     local p = (value - min) / (max - min)
                     tween(Fill, TweenInfo.new(0.1), { Size = UDim2.new(p, 0, 1, 0) })
+                    Thumb.Position = UDim2.new(p, 0, 0.5, 0)
+                    Thumb.AnchorPoint = Vector2.new(p, 0.5)
                     ValueLabel.Text = tostring(value) .. suffix
                     pcall(callback, value)
                 end,
@@ -1052,7 +1057,7 @@ function Library:CreateWindow(config)
                             BindBtn.Text = currentKey.Name
                         end
                         binding = false
-                        tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
+                        tween(BadgeStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
                         connection:Disconnect()
                     end
                 end)
