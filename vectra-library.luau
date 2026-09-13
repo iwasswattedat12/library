@@ -617,7 +617,6 @@ function Library:CreateWindow(config)
     local function setGuiVisible(visible)
         Window.Visible = visible
         Library.Open = visible
-        ScreenGui.Enabled = visible
         MainFrame.Visible = visible
         TopSearchBar.Visible = visible
         BottomTabBar.Visible = visible
@@ -625,33 +624,114 @@ function Library:CreateWindow(config)
         ParticlesContainer.Visible = visible
     end
 
-    local function isMatchingKey(input, activeKey)
-        if not activeKey then return false end
-        if input.KeyCode == activeKey then
+    local function isKeyDown(kc)
+        local ok, down = pcall(function()
+            return UserInputService:IsKeyDown(kc)
+        end)
+        return ok and down
+    end
+
+    local function isRightControlActive()
+        if isKeyDown(Enum.KeyCode.RightControl) then
             return true
         end
-        if input.UserInputType == activeKey then
-            return true
-        end
-        if (activeKey == Enum.KeyCode.RightControl or activeKey == Enum.KeyCode.LeftControl) then
-            if input.KeyCode == Enum.KeyCode.RightControl or input.KeyCode == Enum.KeyCode.LeftControl then
-                return true
-            end
-        end
-        if (activeKey == Enum.KeyCode.RightShift or activeKey == Enum.KeyCode.LeftShift) then
-            if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.LeftShift then
-                return true
-            end
-        end
-        if (activeKey == Enum.KeyCode.RightAlt or activeKey == Enum.KeyCode.LeftAlt) then
-            if input.KeyCode == Enum.KeyCode.RightAlt or input.KeyCode == Enum.KeyCode.LeftAlt then
-                return true
+        local ok, keys = pcall(function()
+            return UserInputService:GetKeysPressed()
+        end)
+        if ok and keys then
+            for _, k in ipairs(keys) do
+                if k.KeyCode == Enum.KeyCode.RightControl then
+                    return true
+                end
             end
         end
         return false
     end
 
+    local function isMatchingKey(input, activeKey)
+        if not activeKey then return false end
+
+        local inKey = input.KeyCode
+        local inType = input.UserInputType
+
+        if inKey == activeKey or inType == activeKey then
+            return true
+        end
+
+        local kName = inKey and inKey.Name
+        local aName = (typeof(activeKey) == "EnumItem" and activeKey.Name) or tostring(activeKey)
+
+        if kName and aName and kName == aName then
+            return true
+        end
+
+        -- Differentiate RightControl vs LeftControl
+        if aName == "RightControl" then
+            if kName == "RightControl" then
+                return true
+            end
+            if kName == "LeftControl" and isRightControlActive() then
+                return true
+            end
+            return false
+        elseif aName == "LeftControl" then
+            if kName == "LeftControl" and not isRightControlActive() then
+                return true
+            end
+            return false
+        elseif aName == "Control" or aName == "Ctrl" then
+            if kName == "RightControl" or kName == "LeftControl" then
+                return true
+            end
+        end
+
+        -- Differentiate RightShift vs LeftShift
+        if aName == "RightShift" then
+            if kName == "RightShift" then
+                return true
+            end
+            if kName == "LeftShift" and isKeyDown(Enum.KeyCode.RightShift) then
+                return true
+            end
+            return false
+        elseif aName == "LeftShift" then
+            if kName == "LeftShift" and not isKeyDown(Enum.KeyCode.RightShift) then
+                return true
+            end
+            return false
+        elseif aName == "Shift" then
+            if kName == "RightShift" or kName == "LeftShift" then
+                return true
+            end
+        end
+
+        -- Differentiate RightAlt vs LeftAlt
+        if aName == "RightAlt" then
+            if kName == "RightAlt" then
+                return true
+            end
+            if kName == "LeftAlt" and isKeyDown(Enum.KeyCode.RightAlt) then
+                return true
+            end
+            return false
+        elseif aName == "LeftAlt" then
+            if kName == "LeftAlt" and not isKeyDown(Enum.KeyCode.RightAlt) then
+                return true
+            end
+            return false
+        elseif aName == "Alt" then
+            if kName == "RightAlt" or kName == "LeftAlt" then
+                return true
+            end
+        end
+
+        return false
+    end
+
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if Library._isBinding or (tick() - (Library._lastRebindTick or 0) < 0.45) then
+            return
+        end
         local activeKey = Library.ToggleKey or toggleKey or Enum.KeyCode.RightControl
         if isMatchingKey(input, activeKey) then
             if not UserInputService:GetFocusedTextBox() then
@@ -1386,14 +1466,25 @@ function Library:CreateWindow(config)
             BindStroke.Thickness = 1
             BindStroke.Parent = BindBtn
 
+            local currentConnection = nil
             BindBtn.MouseButton1Click:Connect(function()
-                if binding then return end
+                if binding then
+                    binding = false
+                    Library._isBinding = false
+                    BindBtn.Text = currentKey and currentKey.Name or "None"
+                    tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
+                    if currentConnection then
+                        currentConnection:Disconnect()
+                        currentConnection = nil
+                    end
+                    return
+                end
                 binding = true
+                Library._isBinding = true
                 BindBtn.Text = "..."
                 tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.Accent })
 
-                local connection
-                connection = UserInputService.InputBegan:Connect(function(input)
+                currentConnection = UserInputService.InputBegan:Connect(function(input)
                     local key = nil
                     if input.UserInputType == Enum.UserInputType.Keyboard then
                         if input.KeyCode == Enum.KeyCode.Unknown then
@@ -1403,6 +1494,13 @@ function Library:CreateWindow(config)
                             key = nil
                         else
                             key = input.KeyCode
+                            if key == Enum.KeyCode.LeftControl and isRightControlActive() then
+                                key = Enum.KeyCode.RightControl
+                            elseif key == Enum.KeyCode.LeftShift and isKeyDown(Enum.KeyCode.RightShift) then
+                                key = Enum.KeyCode.RightShift
+                            elseif key == Enum.KeyCode.LeftAlt and isKeyDown(Enum.KeyCode.RightAlt) then
+                                key = Enum.KeyCode.RightAlt
+                            end
                         end
                     elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
                         key = Enum.UserInputType.MouseButton2
@@ -1415,10 +1513,12 @@ function Library:CreateWindow(config)
                     currentKey = key
                     BindBtn.Text = currentKey and currentKey.Name or "None"
                     binding = false
+                    Library._isBinding = false
+                    Library._lastRebindTick = tick()
                     tween(BindStroke, TweenInfo.new(0.15), { Color = Library.Theme.BadgeBorder })
-                    if connection then
-                        connection:Disconnect()
-                        connection = nil
+                    if currentConnection then
+                        currentConnection:Disconnect()
+                        currentConnection = nil
                     end
                     pcall(callback, currentKey)
                 end)
@@ -1426,7 +1526,7 @@ function Library:CreateWindow(config)
 
             UserInputService.InputBegan:Connect(function(input, processed)
                 if not binding and currentKey then
-                    if (input.KeyCode == currentKey) or (input.UserInputType == currentKey) then
+                    if isMatchingKey(input, currentKey) then
                         if not UserInputService:GetFocusedTextBox() then
                             pcall(callback, currentKey)
                         end
