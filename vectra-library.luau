@@ -314,7 +314,7 @@ function Library:CreateWindow(config)
     config = config or {}
     local windowTitle = config.Title or "******"
     local windowSubtitle = config.Subtitle or getDetectedExecutor()
-    local footerTitle = config.FooterTitle or "Vectra"
+    local footerTitle = config.FooterTitle or "vectra"
     local footerSubtitle = config.FooterSubtitle or getDetectedGameName()
     local windowSize = config.Size or UDim2.fromOffset(720, 460)
     local toggleKey = config.ToggleKey or Library.ToggleKey or Enum.KeyCode.RightShift
