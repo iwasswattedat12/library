@@ -1141,10 +1141,25 @@ function Library:CreateWindow(config)
         function Section:CreateDropdown(drpConfig)
             local drpName = drpConfig.Name or "Dropdown"
             local options = drpConfig.Options or {}
-            local default = drpConfig.Default or options[1] or "Select..."
+            local isMulti = drpConfig.MultiSelect or drpConfig.Multi or false
+            local default = drpConfig.Default
             local callback = drpConfig.Callback or function() end
 
-            local selected = default
+            local selected = nil
+            local selectedMap = {}
+
+            if isMulti then
+                if type(default) == "table" then
+                    for _, v in ipairs(default) do
+                        selectedMap[v] = true
+                    end
+                elseif default ~= nil then
+                    selectedMap[default] = true
+                end
+            else
+                selected = default or options[1] or "Select..."
+            end
+
             local expanded = false
 
             local DropdownFrame = Instance.new("Frame")
@@ -1171,12 +1186,34 @@ function Library:CreateWindow(config)
             HeaderBtn.Text = ""
             HeaderBtn.Parent = DropdownFrame
 
+            local function getDisplayTitle()
+                if isMulti then
+                    local count = 0
+                    local firstItem = nil
+                    for _, opt in ipairs(options) do
+                        if selectedMap[opt] then
+                            count = count + 1
+                            if not firstItem then firstItem = opt end
+                        end
+                    end
+                    if count == 0 then
+                        return drpName .. ": None"
+                    elseif count == 1 then
+                        return drpName .. ": " .. tostring(firstItem)
+                    else
+                        return drpName .. ": " .. tostring(count) .. " selected"
+                    end
+                else
+                    return drpName .. ": " .. tostring(selected)
+                end
+            end
+
             local DrpLabel = Instance.new("TextLabel")
             DrpLabel.Size = UDim2.new(1, -36, 1, 0)
             DrpLabel.Position = UDim2.new(0, 10, 0, 0)
             DrpLabel.BackgroundTransparency = 1
             DrpLabel.Font = Enum.Font.GothamMedium
-            DrpLabel.Text = drpName .. ": " .. tostring(selected)
+            DrpLabel.Text = getDisplayTitle()
             DrpLabel.TextColor3 = Library.Theme.TextNormal
             DrpLabel.TextSize = 12
             DrpLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1192,17 +1229,31 @@ function Library:CreateWindow(config)
             ArrowLabel.TextSize = 9
             ArrowLabel.Parent = HeaderBtn
 
-            local OptionList = Instance.new("Frame")
+            local OptionList = Instance.new("ScrollingFrame")
             OptionList.Name = "OptionList"
-            OptionList.Size = UDim2.new(1, -12, 0, #options * 24)
+            OptionList.Size = UDim2.new(1, -12, 0, math.min(#options * 24, 140))
             OptionList.Position = UDim2.new(0, 6, 0, 32)
             OptionList.BackgroundTransparency = 1
+            OptionList.BorderSizePixel = 0
+            OptionList.ScrollBarThickness = 2
+            OptionList.ScrollBarImageColor3 = Library.Theme.Accent
+            OptionList.CanvasSize = UDim2.new(0, 0, 0, #options * 24)
             OptionList.Parent = DropdownFrame
 
             local OptionLayout = Instance.new("UIListLayout")
             OptionLayout.SortOrder = Enum.SortOrder.LayoutOrder
             OptionLayout.Padding = UDim.new(0, 2)
             OptionLayout.Parent = OptionList
+
+            local function getSelectedList()
+                local list = {}
+                for _, opt in ipairs(options) do
+                    if selectedMap[opt] then
+                        table.insert(list, opt)
+                    end
+                end
+                return list
+            end
 
             local function rebuildOptions()
                 for _, child in ipairs(OptionList:GetChildren()) do
@@ -1212,13 +1263,15 @@ function Library:CreateWindow(config)
                 end
 
                 for _, opt in ipairs(options) do
+                    local isOptSelected = isMulti and (selectedMap[opt] == true) or (opt == selected)
+
                     local OptBtn = Instance.new("TextButton")
                     OptBtn.Name = "Opt_" .. tostring(opt)
-                    OptBtn.Size = UDim2.new(1, 0, 0, 22)
-                    OptBtn.BackgroundColor3 = (opt == selected) and Library.Theme.BtnPress or Library.Theme.MainBg
-                    OptBtn.Text = tostring(opt)
+                    OptBtn.Size = UDim2.new(1, -4, 0, 22)
+                    OptBtn.BackgroundColor3 = isOptSelected and Library.Theme.BtnPress or Library.Theme.MainBg
+                    OptBtn.Text = (isMulti and (isOptSelected and "[✓] " or "[ ] ") or "") .. tostring(opt)
                     OptBtn.Font = Enum.Font.Gotham
-                    OptBtn.TextColor3 = (opt == selected) and Library.Theme.TextWhite or Library.Theme.TextNormal
+                    OptBtn.TextColor3 = isOptSelected and Library.Theme.TextWhite or Library.Theme.TextNormal
                     OptBtn.TextSize = 11
                     OptBtn.AutoButtonColor = false
                     OptBtn.Parent = OptionList
@@ -1228,13 +1281,20 @@ function Library:CreateWindow(config)
                     OptCorner.Parent = OptBtn
 
                     OptBtn.MouseButton1Click:Connect(function()
-                        selected = opt
-                        DrpLabel.Text = drpName .. ": " .. tostring(selected)
-                        expanded = false
-                        ArrowLabel.Text = "▼"
-                        tween(DropdownFrame, TweenInfo.new(0.18), { Size = UDim2.new(1, 0, 0, 30) })
-                        rebuildOptions()
-                        pcall(callback, selected)
+                        if isMulti then
+                            selectedMap[opt] = not selectedMap[opt]
+                            DrpLabel.Text = getDisplayTitle()
+                            rebuildOptions()
+                            pcall(callback, getSelectedList(), opt, selectedMap[opt])
+                        else
+                            selected = opt
+                            DrpLabel.Text = getDisplayTitle()
+                            expanded = false
+                            ArrowLabel.Text = "▼"
+                            tween(DropdownFrame, TweenInfo.new(0.18), { Size = UDim2.new(1, 0, 0, 30) })
+                            rebuildOptions()
+                            pcall(callback, selected)
+                        end
                     end)
                 end
             end
@@ -1244,21 +1304,40 @@ function Library:CreateWindow(config)
             HeaderBtn.MouseButton1Click:Connect(function()
                 expanded = not expanded
                 ArrowLabel.Text = expanded and "▲" or "▼"
-                local targetHeight = expanded and (34 + #options * 24 + 4) or 30
+                local listHeight = math.min(#options * 24, 140)
+                local targetHeight = expanded and (34 + listHeight + 4) or 30
                 tween(DropdownFrame, TweenInfo.new(0.18, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = UDim2.new(1, 0, 0, targetHeight)
                 })
             end)
 
             return {
-                Set = function(self, opt)
-                    selected = opt
-                    DrpLabel.Text = drpName .. ": " .. tostring(selected)
-                    rebuildOptions()
-                    pcall(callback, selected)
+                Set = function(self, val)
+                    if isMulti then
+                        table.clear(selectedMap)
+                        if type(val) == "table" then
+                            for _, v in ipairs(val) do
+                                selectedMap[v] = true
+                            end
+                        elseif val ~= nil then
+                            selectedMap[val] = true
+                        end
+                        DrpLabel.Text = getDisplayTitle()
+                        rebuildOptions()
+                        pcall(callback, getSelectedList())
+                    else
+                        selected = val
+                        DrpLabel.Text = getDisplayTitle()
+                        rebuildOptions()
+                        pcall(callback, selected)
+                    end
                 end,
                 Value = function(self)
-                    return selected
+                    if isMulti then
+                        return getSelectedList()
+                    else
+                        return selected
+                    end
                 end
             }
         end
