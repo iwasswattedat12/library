@@ -457,7 +457,7 @@ function Library:CreateWindow(config)
 
     local FootSubtitle = Instance.new("TextLabel")
     FootSubtitle.Name = "Subtitle"
-    FootSubtitle.Size = UDim2.new(1, -80, 0, 18)
+    FootSubtitle.Size = UDim2.new(1, -32, 0, 18)
     FootSubtitle.Position = UDim2.new(0, 16, 0.5, -9)
     FootSubtitle.BackgroundTransparency = 1
     FootSubtitle.Font = Enum.Font.GothamMedium
@@ -469,41 +469,6 @@ function Library:CreateWindow(config)
     FootSubtitle.Parent = FooterBar
 
     local discordLink = config.Discord or config.DiscordLink or "https://discord.gg/abub3nh7EW"
-
-    local DiscordBtn = Instance.new("TextButton")
-    DiscordBtn.Name = "DiscordBtn"
-    DiscordBtn.Size = UDim2.new(0, 30, 0, 30)
-    DiscordBtn.Position = UDim2.new(1, -44, 0.5, -15)
-    DiscordBtn.BackgroundTransparency = 1
-    DiscordBtn.Text = ""
-    DiscordBtn.AutoButtonColor = false
-    DiscordBtn.ZIndex = 23
-    DiscordBtn.Parent = FooterBar
-
-    -- Glowing aura layer behind calendar symbol only
-    local CalendarGlow = Instance.new("ImageLabel")
-    CalendarGlow.Name = "Glow"
-    CalendarGlow.AnchorPoint = Vector2.new(0.5, 0.5)
-    CalendarGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    CalendarGlow.Size = UDim2.new(0, 22, 0, 22)
-    CalendarGlow.BackgroundTransparency = 1
-    CalendarGlow.Image = "rbxassetid://10709789505"
-    CalendarGlow.ImageColor3 = Color3.fromRGB(157, 123, 255)
-    CalendarGlow.ImageTransparency = 1
-    CalendarGlow.ZIndex = 23
-    CalendarGlow.Parent = DiscordBtn
-
-    -- Calendar symbol
-    local CalendarIcon = Instance.new("ImageLabel")
-    CalendarIcon.Name = "Icon"
-    CalendarIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-    CalendarIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    CalendarIcon.Size = UDim2.new(0, 18, 0, 18)
-    CalendarIcon.BackgroundTransparency = 1
-    CalendarIcon.Image = "rbxassetid://10709789505"
-    CalendarIcon.ImageColor3 = Library.Theme.TextMuted
-    CalendarIcon.ZIndex = 24
-    CalendarIcon.Parent = DiscordBtn
 
     local function copyToClipboard(text)
         pcall(function()
@@ -517,31 +482,8 @@ function Library:CreateWindow(config)
         end)
     end
 
-    DiscordBtn.MouseEnter:Connect(function()
-        -- Only the symbol glows (smooth light-up and glow bloom)
-        tween(CalendarIcon, TweenInfo.new(0.18), {
-            ImageColor3 = Color3.fromRGB(255, 255, 255),
-            Size = UDim2.new(0, 19, 0, 19)
-        })
-        tween(CalendarGlow, TweenInfo.new(0.18), {
-            ImageTransparency = 0.35,
-            ImageColor3 = Library.Theme.Accent,
-            Size = UDim2.new(0, 26, 0, 26)
-        })
-    end)
-
-    DiscordBtn.MouseLeave:Connect(function()
-        tween(CalendarIcon, TweenInfo.new(0.18), {
-            ImageColor3 = Library.Theme.TextMuted,
-            Size = UDim2.new(0, 18, 0, 18)
-        })
-        tween(CalendarGlow, TweenInfo.new(0.18), {
-            ImageTransparency = 1,
-            Size = UDim2.new(0, 22, 0, 22)
-        })
-    end)
-
-    DiscordBtn.MouseButton1Click:Connect(function()
+    -- Automatically copy Discord invite on run
+    task.spawn(function()
         copyToClipboard(discordLink)
         Library:Notify({
             Title = "Discord",
