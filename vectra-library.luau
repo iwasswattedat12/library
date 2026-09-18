@@ -325,7 +325,6 @@ function Library:CreateWindow(config)
     config = config or {}
     local windowTitle = "vectra"
     local windowSubtitle = config.Subtitle or getDetectedExecutor()
-    local footerTitle = config.FooterTitle or "developed by osint ambition"
     local footerSubtitle = config.FooterSubtitle or getDetectedGameName()
     local windowSize = config.Size or UDim2.fromOffset(720, 430)
     local toggleKey = config.ToggleKey or Library.ToggleKey or Enum.KeyCode.RightShift
@@ -456,28 +455,15 @@ function Library:CreateWindow(config)
     FooterDivider.ZIndex = 21
     FooterDivider.Parent = FooterBar
 
-    local FootTitle = Instance.new("TextLabel")
-    FootTitle.Name = "Title"
-    FootTitle.Size = UDim2.new(1, -120, 0, 16)
-    FootTitle.Position = UDim2.new(0, 16, 0, 7)
-    FootTitle.BackgroundTransparency = 1
-    FootTitle.Font = Enum.Font.GothamBold
-    FootTitle.Text = footerTitle
-    FootTitle.TextColor3 = Library.Theme.TextWhite
-    FootTitle.TextSize = 13
-    FootTitle.TextXAlignment = Enum.TextXAlignment.Left
-    FootTitle.ZIndex = 22
-    FootTitle.Parent = FooterBar
-
     local FootSubtitle = Instance.new("TextLabel")
     FootSubtitle.Name = "Subtitle"
-    FootSubtitle.Size = UDim2.new(1, -120, 0, 14)
-    FootSubtitle.Position = UDim2.new(0, 16, 0, 24)
+    FootSubtitle.Size = UDim2.new(1, -80, 0, 18)
+    FootSubtitle.Position = UDim2.new(0, 16, 0.5, -9)
     FootSubtitle.BackgroundTransparency = 1
-    FootSubtitle.Font = Enum.Font.Gotham
+    FootSubtitle.Font = Enum.Font.GothamMedium
     FootSubtitle.Text = footerSubtitle
     FootSubtitle.TextColor3 = Library.Theme.TextMuted
-    FootSubtitle.TextSize = 11
+    FootSubtitle.TextSize = 12
     FootSubtitle.TextXAlignment = Enum.TextXAlignment.Left
     FootSubtitle.ZIndex = 22
     FootSubtitle.Parent = FooterBar
@@ -486,48 +472,38 @@ function Library:CreateWindow(config)
 
     local DiscordBtn = Instance.new("TextButton")
     DiscordBtn.Name = "DiscordBtn"
-    DiscordBtn.Size = UDim2.new(0, 32, 0, 28)
-    DiscordBtn.Position = UDim2.new(1, -48, 0.5, -14)
-    DiscordBtn.BackgroundColor3 = Library.Theme.BtnBg
-    DiscordBtn.BackgroundTransparency = 0.4
+    DiscordBtn.Size = UDim2.new(0, 30, 0, 30)
+    DiscordBtn.Position = UDim2.new(1, -44, 0.5, -15)
+    DiscordBtn.BackgroundTransparency = 1
     DiscordBtn.Text = ""
     DiscordBtn.AutoButtonColor = false
     DiscordBtn.ZIndex = 23
     DiscordBtn.Parent = FooterBar
 
-    local DiscordCorner = Instance.new("UICorner")
-    DiscordCorner.CornerRadius = UDim.new(0, 6)
-    DiscordCorner.Parent = DiscordBtn
+    -- Glowing aura layer behind calendar symbol only
+    local CalendarGlow = Instance.new("ImageLabel")
+    CalendarGlow.Name = "Glow"
+    CalendarGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+    CalendarGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    CalendarGlow.Size = UDim2.new(0, 22, 0, 22)
+    CalendarGlow.BackgroundTransparency = 1
+    CalendarGlow.Image = "rbxassetid://10709789505"
+    CalendarGlow.ImageColor3 = Color3.fromRGB(157, 123, 255)
+    CalendarGlow.ImageTransparency = 1
+    CalendarGlow.ZIndex = 23
+    CalendarGlow.Parent = DiscordBtn
 
-    local DiscordStroke = Instance.new("UIStroke")
-    DiscordStroke.Color = Library.Theme.BtnBorder
-    DiscordStroke.Thickness = 1
-    DiscordStroke.Parent = DiscordBtn
-
-    -- Glowing aura layer behind icon
-    local DiscordGlow = Instance.new("ImageLabel")
-    DiscordGlow.Name = "Glow"
-    DiscordGlow.AnchorPoint = Vector2.new(0.5, 0.5)
-    DiscordGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DiscordGlow.Size = UDim2.new(0, 26, 0, 26)
-    DiscordGlow.BackgroundTransparency = 1
-    DiscordGlow.Image = "rbxassetid://6034509993"
-    DiscordGlow.ImageColor3 = Color3.fromRGB(88, 101, 242)
-    DiscordGlow.ImageTransparency = 1
-    DiscordGlow.ZIndex = 23
-    DiscordGlow.Parent = DiscordBtn
-
-    -- Sharp front icon
-    local DiscordIcon = Instance.new("ImageLabel")
-    DiscordIcon.Name = "Icon"
-    DiscordIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-    DiscordIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DiscordIcon.Size = UDim2.new(0, 18, 0, 18)
-    DiscordIcon.BackgroundTransparency = 1
-    DiscordIcon.Image = "rbxassetid://6034509993"
-    DiscordIcon.ImageColor3 = Library.Theme.TextMuted
-    DiscordIcon.ZIndex = 24
-    DiscordIcon.Parent = DiscordBtn
+    -- Calendar symbol
+    local CalendarIcon = Instance.new("ImageLabel")
+    CalendarIcon.Name = "Icon"
+    CalendarIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    CalendarIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    CalendarIcon.Size = UDim2.new(0, 18, 0, 18)
+    CalendarIcon.BackgroundTransparency = 1
+    CalendarIcon.Image = "rbxassetid://10709789505"
+    CalendarIcon.ImageColor3 = Library.Theme.TextMuted
+    CalendarIcon.ZIndex = 24
+    CalendarIcon.Parent = DiscordBtn
 
     local function copyToClipboard(text)
         pcall(function()
@@ -542,40 +518,26 @@ function Library:CreateWindow(config)
     end
 
     DiscordBtn.MouseEnter:Connect(function()
-        tween(DiscordBtn, TweenInfo.new(0.18), {
-            BackgroundColor3 = Color3.fromRGB(24, 26, 38),
-            BackgroundTransparency = 0.2
-        })
-        tween(DiscordStroke, TweenInfo.new(0.18), {
-            Color = Color3.fromRGB(88, 101, 242)
-        })
-        tween(DiscordIcon, TweenInfo.new(0.18), {
-            ImageColor3 = Color3.fromRGB(114, 137, 255),
+        -- Only the symbol glows (smooth light-up and glow bloom)
+        tween(CalendarIcon, TweenInfo.new(0.18), {
+            ImageColor3 = Color3.fromRGB(255, 255, 255),
             Size = UDim2.new(0, 19, 0, 19)
         })
-        -- Icon glow activation
-        tween(DiscordGlow, TweenInfo.new(0.18), {
+        tween(CalendarGlow, TweenInfo.new(0.18), {
             ImageTransparency = 0.35,
-            Size = UDim2.new(0, 28, 0, 28)
+            ImageColor3 = Library.Theme.Accent,
+            Size = UDim2.new(0, 26, 0, 26)
         })
     end)
 
     DiscordBtn.MouseLeave:Connect(function()
-        tween(DiscordBtn, TweenInfo.new(0.18), {
-            BackgroundColor3 = Library.Theme.BtnBg,
-            BackgroundTransparency = 0.4
-        })
-        tween(DiscordStroke, TweenInfo.new(0.18), {
-            Color = Library.Theme.BtnBorder
-        })
-        tween(DiscordIcon, TweenInfo.new(0.18), {
+        tween(CalendarIcon, TweenInfo.new(0.18), {
             ImageColor3 = Library.Theme.TextMuted,
             Size = UDim2.new(0, 18, 0, 18)
         })
-        -- Fade glow away
-        tween(DiscordGlow, TweenInfo.new(0.18), {
+        tween(CalendarGlow, TweenInfo.new(0.18), {
             ImageTransparency = 1,
-            Size = UDim2.new(0, 24, 0, 24)
+            Size = UDim2.new(0, 22, 0, 22)
         })
     end)
 
