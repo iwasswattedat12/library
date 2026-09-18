@@ -323,9 +323,9 @@ end
 
 function Library:CreateWindow(config)
     config = config or {}
-    local windowTitle = vectra"
+    local windowTitle = "vectra"
     local windowSubtitle = config.Subtitle or getDetectedExecutor()
-    local footerTitle = config.FooterTitle or "developed by japan"
+    local footerTitle = config.FooterTitle or "developed by osint ambition"
     local footerSubtitle = config.FooterSubtitle or getDetectedGameName()
     local windowSize = config.Size or UDim2.fromOffset(720, 430)
     local toggleKey = config.ToggleKey or Library.ToggleKey or Enum.KeyCode.RightShift
@@ -363,17 +363,64 @@ function Library:CreateWindow(config)
     Topbar.Active = true
     Topbar.Parent = MainFrame
 
+    local targetUsername = (LocalPlayer and LocalPlayer.Name) or "User"
+    local isTitleHovered = false
+    local titleAnimThread = nil
+
+    local TitleHitbox = Instance.new("TextButton")
+    TitleHitbox.Name = "TitleInteractive"
+    TitleHitbox.Size = UDim2.new(0, 240, 0, 18)
+    TitleHitbox.Position = UDim2.new(0, 16, 0, 9)
+    TitleHitbox.BackgroundTransparency = 1
+    TitleHitbox.Text = ""
+    TitleHitbox.AutoButtonColor = false
+    TitleHitbox.Parent = Topbar
+
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Name = "Title"
-    TitleLabel.Size = UDim2.new(0, 200, 0, 18)
-    TitleLabel.Position = UDim2.new(0, 16, 0, 9)
+    TitleLabel.Size = UDim2.new(1, 0, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 0, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.Text = windowTitle
     TitleLabel.TextColor3 = Library.Theme.TextWhite
     TitleLabel.TextSize = 14
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Parent = Topbar
+    TitleLabel.Parent = TitleHitbox
+
+    local function animateTitleText(toText)
+        if titleAnimThread then
+            task.cancel(titleAnimThread)
+            titleAnimThread = nil
+        end
+        titleAnimThread = task.spawn(function()
+            local chars = "!@#$%&*?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+            local len = #toText
+            local steps = 10
+            for i = 1, steps do
+                local progress = i / steps
+                local revealed = math.floor(progress * len)
+                local str = string.sub(toText, 1, revealed)
+                for _ = revealed + 1, len do
+                    local r = math.random(1, #chars)
+                    str = str .. string.sub(chars, r, r)
+                end
+                TitleLabel.Text = str
+                task.wait(0.02)
+            end
+            TitleLabel.Text = toText
+        end)
+    end
+
+    TitleHitbox.MouseEnter:Connect(function()
+        isTitleHovered = true
+        animateTitleText(targetUsername)
+    end)
+
+    TitleHitbox.MouseLeave:Connect(function()
+        isTitleHovered = false
+        animateTitleText(windowTitle)
+    end)
 
     local SubtitleLabel = Instance.new("TextLabel")
     SubtitleLabel.Name = "Subtitle"
@@ -388,6 +435,7 @@ function Library:CreateWindow(config)
     SubtitleLabel.Parent = Topbar
 
     makeDraggable(Topbar, MainFrame)
+    makeDraggable(TitleHitbox, MainFrame)
 
     local FooterBar = Instance.new("Frame")
     FooterBar.Name = "FooterBar"
@@ -410,7 +458,7 @@ function Library:CreateWindow(config)
 
     local FootTitle = Instance.new("TextLabel")
     FootTitle.Name = "Title"
-    FootTitle.Size = UDim2.new(1, -32, 0, 16)
+    FootTitle.Size = UDim2.new(1, -120, 0, 16)
     FootTitle.Position = UDim2.new(0, 16, 0, 7)
     FootTitle.BackgroundTransparency = 1
     FootTitle.Font = Enum.Font.GothamBold
@@ -423,7 +471,7 @@ function Library:CreateWindow(config)
 
     local FootSubtitle = Instance.new("TextLabel")
     FootSubtitle.Name = "Subtitle"
-    FootSubtitle.Size = UDim2.new(1, -32, 0, 14)
+    FootSubtitle.Size = UDim2.new(1, -120, 0, 14)
     FootSubtitle.Position = UDim2.new(0, 16, 0, 24)
     FootSubtitle.BackgroundTransparency = 1
     FootSubtitle.Font = Enum.Font.Gotham
@@ -433,6 +481,67 @@ function Library:CreateWindow(config)
     FootSubtitle.TextXAlignment = Enum.TextXAlignment.Left
     FootSubtitle.ZIndex = 22
     FootSubtitle.Parent = FooterBar
+
+    local discordLink = config.Discord or config.DiscordLink or "https://discord.gg/osintambition"
+
+    local DiscordBtn = Instance.new("TextButton")
+    DiscordBtn.Name = "DiscordBtn"
+    DiscordBtn.Size = UDim2.new(0, 84, 0, 24)
+    DiscordBtn.Position = UDim2.new(1, -100, 0.5, -12)
+    DiscordBtn.BackgroundColor3 = Library.Theme.BtnBg
+    DiscordBtn.Text = "Discord"
+    DiscordBtn.Font = Enum.Font.GothamMedium
+    DiscordBtn.TextColor3 = Library.Theme.TextNormal
+    DiscordBtn.TextSize = 11
+    DiscordBtn.AutoButtonColor = false
+    DiscordBtn.ZIndex = 23
+    DiscordBtn.Parent = FooterBar
+
+    local DiscordCorner = Instance.new("UICorner")
+    DiscordCorner.CornerRadius = UDim.new(0, 5)
+    DiscordCorner.Parent = DiscordBtn
+
+    local DiscordStroke = Instance.new("UIStroke")
+    DiscordStroke.Color = Library.Theme.BtnBorder
+    DiscordStroke.Thickness = 1
+    DiscordStroke.Parent = DiscordBtn
+
+    local function copyToClipboard(text)
+        pcall(function()
+            if setclipboard then
+                setclipboard(text)
+            elseif toclipboard then
+                toclipboard(text)
+            elseif syn and syn.write_clipboard then
+                syn.write_clipboard(text)
+            end
+        end)
+    end
+
+    DiscordBtn.MouseEnter:Connect(function()
+        tween(DiscordBtn, TweenInfo.new(0.12), {
+            BackgroundColor3 = Color3.fromRGB(88, 101, 242),
+            TextColor3 = Color3.fromRGB(255, 255, 255)
+        })
+        tween(DiscordStroke, TweenInfo.new(0.12), { Color = Color3.fromRGB(88, 101, 242) })
+    end)
+
+    DiscordBtn.MouseLeave:Connect(function()
+        tween(DiscordBtn, TweenInfo.new(0.12), {
+            BackgroundColor3 = Library.Theme.BtnBg,
+            TextColor3 = Library.Theme.TextNormal
+        })
+        tween(DiscordStroke, TweenInfo.new(0.12), { Color = Library.Theme.BtnBorder })
+    end)
+
+    DiscordBtn.MouseButton1Click:Connect(function()
+        copyToClipboard(discordLink)
+        Library:Notify({
+            Title = "Discord",
+            Content = "Copied Discord link to clipboard!",
+            Duration = 2.5
+        })
+    end)
 
     local TopSearchBar = Instance.new("Frame")
     TopSearchBar.Name = "TopSearchBar"
@@ -653,8 +762,8 @@ function Library:CreateWindow(config)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
-    ContentScroll.Size = UDim2.new(1, -32, 1, -94)
-    ContentScroll.Position = UDim2.new(0, 16, 0, 48)
+    ContentScroll.Size = UDim2.new(1, -36, 1, -94)
+    ContentScroll.Position = UDim2.new(0, 18, 0, 48)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
     ContentScroll.ScrollBarThickness = 0
@@ -665,8 +774,10 @@ function Library:CreateWindow(config)
     ContentScroll.Parent = MainFrame
 
     local ContentPadding = Instance.new("UIPadding")
-    ContentPadding.PaddingTop = UDim.new(0, 4)
-    ContentPadding.PaddingBottom = UDim.new(0, 10)
+    ContentPadding.PaddingTop = UDim.new(0, 8)
+    ContentPadding.PaddingBottom = UDim.new(0, 16)
+    ContentPadding.PaddingLeft = UDim.new(0, 6)
+    ContentPadding.PaddingRight = UDim.new(0, 6)
     ContentPadding.Parent = ContentScroll
 
     local function buildSection(sectionConfig, optionalSide, leftCol, rightCol, tabObj)
@@ -1487,6 +1598,7 @@ function Library:CreateWindow(config)
         TabPage.Size = UDim2.new(1, 0, 0, 0)
         TabPage.AutomaticSize = Enum.AutomaticSize.Y
         TabPage.BackgroundTransparency = 1
+        TabPage.ClipsDescendants = false
         TabPage.Visible = false
         TabPage.Parent = ContentScroll
 
@@ -1496,6 +1608,7 @@ function Library:CreateWindow(config)
         LeftColumn.Position = UDim2.new(0, 0, 0, 0)
         LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
         LeftColumn.BackgroundTransparency = 1
+        LeftColumn.ClipsDescendants = false
         LeftColumn.Parent = TabPage
 
         local LeftLayout = Instance.new("UIListLayout")
@@ -1509,6 +1622,7 @@ function Library:CreateWindow(config)
         RightColumn.Position = UDim2.new(0.5, 6, 0, 0)
         RightColumn.AutomaticSize = Enum.AutomaticSize.Y
         RightColumn.BackgroundTransparency = 1
+        RightColumn.ClipsDescendants = false
         RightColumn.Parent = TabPage
 
         local RightLayout = Instance.new("UIListLayout")
