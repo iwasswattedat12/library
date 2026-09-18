@@ -83,6 +83,15 @@ local function makeDraggable(topbar, main)
 
     topbar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local textBox = topbar:FindFirstChildOfClass("TextBox") or topbar:FindFirstChild("Input")
+            if textBox and textBox:IsA("TextBox") then
+                local mPos = UserInputService:GetMouseLocation()
+                local tPos = textBox.AbsolutePosition
+                local tSize = textBox.AbsoluteSize
+                if mPos.X >= tPos.X and mPos.X <= tPos.X + tSize.X and mPos.Y >= tPos.Y and mPos.Y <= tPos.Y + tSize.Y then
+                    return
+                end
+            end
             dragging = true
             dragStart = input.Position
             startPos = main.Position
@@ -135,6 +144,7 @@ DarkOverlay.Position = UDim2.new(0, 0, 0, 0)
 DarkOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 DarkOverlay.BackgroundTransparency = 0.5
 DarkOverlay.BorderSizePixel = 0
+DarkOverlay.Active = true
 DarkOverlay.ZIndex = 0
 DarkOverlay.Parent = ScreenGui
 
@@ -144,6 +154,7 @@ ParticlesContainer.Size = UDim2.new(1, 0, 1, 0)
 ParticlesContainer.Position = UDim2.new(0, 0, 0, 0)
 ParticlesContainer.BackgroundTransparency = 1
 ParticlesContainer.ClipsDescendants = false
+ParticlesContainer.Active = true
 ParticlesContainer.ZIndex = 1
 ParticlesContainer.Parent = ScreenGui
 
@@ -312,11 +323,11 @@ end
 
 function Library:CreateWindow(config)
     config = config or {}
-    local windowTitle = config.Title or "******"
+    local windowTitle = "******"
     local windowSubtitle = config.Subtitle or getDetectedExecutor()
-    local footerTitle = config.FooterTitle or "vectra"
+    local footerTitle = config.FooterTitle or "Vectra"
     local footerSubtitle = config.FooterSubtitle or getDetectedGameName()
-    local windowSize = config.Size or UDim2.fromOffset(720, 460)
+    local windowSize = config.Size or UDim2.fromOffset(720, 430)
     local toggleKey = config.ToggleKey or Library.ToggleKey or Enum.KeyCode.RightShift
 
     local Window = {
@@ -326,10 +337,12 @@ function Library:CreateWindow(config)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "WisperWindow"
     MainFrame.Size = windowSize
-    MainFrame.Position = UDim2.new(0.5, -windowSize.X.Offset / 2, 0.5, -windowSize.Y.Offset / 2)
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     MainFrame.BackgroundColor3 = Library.Theme.MainBg
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = false
+    MainFrame.Active = true
     MainFrame.Parent = ScreenGui
 
     local MainCorner = Instance.new("UICorner")
@@ -338,91 +351,33 @@ function Library:CreateWindow(config)
 
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Color = Library.Theme.CardBorder
-    MainStroke.Thickness = 1.2
+    MainStroke.Thickness = 1
     MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     MainStroke.Parent = MainFrame
 
     local Topbar = Instance.new("Frame")
     Topbar.Name = "Topbar"
     Topbar.Size = UDim2.new(1, 0, 0, 48)
-    Topbar.BackgroundColor3 = Library.Theme.MainBg
+    Topbar.BackgroundTransparency = 1
     Topbar.BorderSizePixel = 0
+    Topbar.Active = true
     Topbar.Parent = MainFrame
-
-    local TopbarCorner = Instance.new("UICorner")
-    TopbarCorner.CornerRadius = UDim.new(0, 10)
-    TopbarCorner.Parent = Topbar
-
-    local TopbarPatch = Instance.new("Frame")
-    TopbarPatch.Name = "TopbarPatch"
-    TopbarPatch.Size = UDim2.new(1, 0, 0, 10)
-    TopbarPatch.Position = UDim2.new(0, 0, 1, -10)
-    TopbarPatch.BackgroundColor3 = Library.Theme.MainBg
-    TopbarPatch.BorderSizePixel = 0
-    TopbarPatch.Parent = Topbar
-
-    local targetUsername = (LocalPlayer and LocalPlayer.Name) or "User"
-    local isTitleHovered = false
-    local titleAnimThread = nil
-
-    local TitleHitbox = Instance.new("TextButton")
-    TitleHitbox.Name = "TitleInteractive"
-    TitleHitbox.Size = UDim2.new(0, 200, 0, 18)
-    TitleHitbox.Position = UDim2.new(0, 16, 0, 9)
-    TitleHitbox.BackgroundTransparency = 1
-    TitleHitbox.Text = ""
-    TitleHitbox.AutoButtonColor = false
-    TitleHitbox.Parent = Topbar
 
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Name = "Title"
-    TitleLabel.Size = UDim2.new(1, 0, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 0, 0, 0)
+    TitleLabel.Size = UDim2.new(0, 200, 0, 18)
+    TitleLabel.Position = UDim2.new(0, 16, 0, 9)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.Text = windowTitle
     TitleLabel.TextColor3 = Library.Theme.TextWhite
     TitleLabel.TextSize = 14
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Parent = TitleHitbox
-
-    local function animateTitleText(toText)
-        if titleAnimThread then
-            task.cancel(titleAnimThread)
-            titleAnimThread = nil
-        end
-        titleAnimThread = task.spawn(function()
-            local chars = "!@#$%&*?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-            local len = #toText
-            local steps = 10
-            for i = 1, steps do
-                local progress = i / steps
-                local revealed = math.floor(progress * len)
-                local str = string.sub(toText, 1, revealed)
-                for _ = revealed + 1, len do
-                    local r = math.random(1, #chars)
-                    str = str .. string.sub(chars, r, r)
-                end
-                TitleLabel.Text = str
-                task.wait(0.02)
-            end
-            TitleLabel.Text = toText
-        end)
-    end
-
-    TitleHitbox.MouseEnter:Connect(function()
-        isTitleHovered = true
-        animateTitleText(targetUsername)
-    end)
-
-    TitleHitbox.MouseLeave:Connect(function()
-        isTitleHovered = false
-        animateTitleText(windowTitle)
-    end)
+    TitleLabel.Parent = Topbar
 
     local SubtitleLabel = Instance.new("TextLabel")
     SubtitleLabel.Name = "Subtitle"
-    SubtitleLabel.Size = UDim2.new(1, -32, 0, 14)
+    SubtitleLabel.Size = UDim2.new(1, -60, 0, 14)
     SubtitleLabel.Position = UDim2.new(0, 16, 0, 27)
     SubtitleLabel.BackgroundTransparency = 1
     SubtitleLabel.Font = Enum.Font.Gotham
@@ -438,28 +393,16 @@ function Library:CreateWindow(config)
     FooterBar.Name = "FooterBar"
     FooterBar.Size = UDim2.new(1, 0, 0, 46)
     FooterBar.Position = UDim2.new(0, 0, 1, -46)
-    FooterBar.BackgroundColor3 = Library.Theme.MainBg
+    FooterBar.BackgroundTransparency = 1
     FooterBar.BorderSizePixel = 0
+    FooterBar.Active = true
     FooterBar.ZIndex = 20
     FooterBar.Parent = MainFrame
 
-    local FooterCorner = Instance.new("UICorner")
-    FooterCorner.CornerRadius = UDim.new(0, 10)
-    FooterCorner.Parent = FooterBar
-
-    local FooterPatch = Instance.new("Frame")
-    FooterPatch.Name = "FooterPatch"
-    FooterPatch.Size = UDim2.new(1, 0, 0, 10)
-    FooterPatch.Position = UDim2.new(0, 0, 0, 0)
-    FooterPatch.BackgroundColor3 = Library.Theme.MainBg
-    FooterPatch.BorderSizePixel = 0
-    FooterPatch.ZIndex = 20
-    FooterPatch.Parent = FooterBar
-
     local FooterDivider = Instance.new("Frame")
     FooterDivider.Name = "Divider"
-    FooterDivider.Size = UDim2.new(1, 0, 0, 1)
-    FooterDivider.Position = UDim2.new(0, 0, 0, 0)
+    FooterDivider.Size = UDim2.new(1, -2, 0, 1)
+    FooterDivider.Position = UDim2.new(0, 1, 0, 0)
     FooterDivider.BackgroundColor3 = Library.Theme.BorderDivider
     FooterDivider.BorderSizePixel = 0
     FooterDivider.ZIndex = 21
@@ -494,12 +437,13 @@ function Library:CreateWindow(config)
     local TopSearchBar = Instance.new("Frame")
     TopSearchBar.Name = "TopSearchBar"
     TopSearchBar.AnchorPoint = Vector2.new(0.5, 1)
-    TopSearchBar.Size = UDim2.new(0, 240, 0, 28)
-    TopSearchBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset + (windowSize.X.Offset / 2), MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset - 8)
+    TopSearchBar.Size = UDim2.new(0, 220, 0, 28)
+    TopSearchBar.Position = UDim2.new(0.5, 0, 0, -8)
     TopSearchBar.BackgroundColor3 = Library.Theme.MainBg
     TopSearchBar.BorderSizePixel = 0
+    TopSearchBar.Active = true
     TopSearchBar.ZIndex = 25
-    TopSearchBar.Parent = ScreenGui
+    TopSearchBar.Parent = MainFrame
 
     local SearchCorner = Instance.new("UICorner")
     SearchCorner.CornerRadius = UDim.new(1, 0)
@@ -507,26 +451,14 @@ function Library:CreateWindow(config)
 
     local SearchStroke = Instance.new("UIStroke")
     SearchStroke.Color = Library.Theme.CardBorder
-    SearchStroke.Thickness = 1.2
+    SearchStroke.Thickness = 1
     SearchStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     SearchStroke.Parent = TopSearchBar
 
-    local SearchIcon = Instance.new("TextLabel")
-    SearchIcon.Name = "Icon"
-    SearchIcon.Size = UDim2.new(0, 18, 1, 0)
-    SearchIcon.Position = UDim2.new(0, 10, 0, 0)
-    SearchIcon.BackgroundTransparency = 1
-    SearchIcon.Font = Enum.Font.GothamMedium
-    SearchIcon.Text = "🔍"
-    SearchIcon.TextColor3 = Library.Theme.TextMuted
-    SearchIcon.TextSize = 11
-    SearchIcon.ZIndex = 26
-    SearchIcon.Parent = TopSearchBar
-
     local SearchInput = Instance.new("TextBox")
     SearchInput.Name = "Input"
-    SearchInput.Size = UDim2.new(1, -50, 1, 0)
-    SearchInput.Position = UDim2.new(0, 30, 0, 0)
+    SearchInput.Size = UDim2.new(1, -38, 1, 0)
+    SearchInput.Position = UDim2.new(0, 14, 0, 0)
     SearchInput.BackgroundTransparency = 1
     SearchInput.Font = Enum.Font.Gotham
     SearchInput.PlaceholderText = "Search..."
@@ -545,7 +477,7 @@ function Library:CreateWindow(config)
     ClearBtn.Position = UDim2.new(1, -22, 0.5, -8)
     ClearBtn.BackgroundTransparency = 1
     ClearBtn.Font = Enum.Font.GothamBold
-    ClearBtn.Text = "✕"
+    ClearBtn.Text = "X"
     ClearBtn.TextColor3 = Library.Theme.TextMuted
     ClearBtn.TextSize = 10
     ClearBtn.Visible = false
@@ -557,11 +489,12 @@ function Library:CreateWindow(config)
     BottomTabBar.AnchorPoint = Vector2.new(0.5, 0)
     BottomTabBar.Size = UDim2.new(0, 0, 0, 30)
     BottomTabBar.AutomaticSize = Enum.AutomaticSize.X
-    BottomTabBar.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset + (windowSize.X.Offset / 2), MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + windowSize.Y.Offset + 8)
+    BottomTabBar.Position = UDim2.new(0.5, 0, 1, 8)
     BottomTabBar.BackgroundColor3 = Library.Theme.MainBg
     BottomTabBar.BorderSizePixel = 0
+    BottomTabBar.Active = true
     BottomTabBar.ZIndex = 25
-    BottomTabBar.Parent = ScreenGui
+    BottomTabBar.Parent = MainFrame
 
     local BottomCorner = Instance.new("UICorner")
     BottomCorner.CornerRadius = UDim.new(1, 0)
@@ -569,7 +502,7 @@ function Library:CreateWindow(config)
 
     local BottomStroke = Instance.new("UIStroke")
     BottomStroke.Color = Library.Theme.CardBorder
-    BottomStroke.Thickness = 1.2
+    BottomStroke.Thickness = 1
     BottomStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     BottomStroke.Parent = BottomTabBar
 
@@ -596,30 +529,10 @@ function Library:CreateWindow(config)
     TabLayout.Padding = UDim.new(0, 4)
     TabLayout.Parent = TabContainer
 
-    local function syncPositions()
-        TopSearchBar.Position = UDim2.new(
-            MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset + (MainFrame.Size.X.Offset / 2),
-            MainFrame.Position.Y.Scale,
-            MainFrame.Position.Y.Offset - 8
-        )
-        BottomTabBar.Position = UDim2.new(
-            MainFrame.Position.X.Scale,
-            MainFrame.Position.X.Offset + (MainFrame.Size.X.Offset / 2),
-            MainFrame.Position.Y.Scale,
-            MainFrame.Position.Y.Offset + MainFrame.Size.Y.Offset + 8
-        )
-    end
-
-    MainFrame:GetPropertyChangedSignal("Position"):Connect(syncPositions)
-    MainFrame:GetPropertyChangedSignal("Size"):Connect(syncPositions)
-
     local function setGuiVisible(visible)
         Window.Visible = visible
         Library.Open = visible
         if MainFrame then MainFrame.Visible = visible end
-        if TopSearchBar then TopSearchBar.Visible = visible end
-        if BottomTabBar then BottomTabBar.Visible = visible end
         if DarkOverlay then DarkOverlay.Visible = visible end
         if ParticlesContainer then ParticlesContainer.Visible = visible end
     end
@@ -685,7 +598,7 @@ function Library:CreateWindow(config)
     CloseBtn.Position = UDim2.new(1, -34, 0.5, -11)
     CloseBtn.BackgroundColor3 = Library.Theme.BtnBg
     CloseBtn.BackgroundTransparency = 0.5
-    CloseBtn.Text = "✕"
+    CloseBtn.Text = "X"
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.TextColor3 = Library.Theme.TextMuted
     CloseBtn.TextSize = 11
@@ -709,7 +622,11 @@ function Library:CreateWindow(config)
         tween(CloseBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.5, TextColor3 = Library.Theme.TextMuted })
     end)
     CloseBtn.MouseButton1Click:Connect(function()
-        setGuiVisible(false)
+        if particleConnection then
+            particleConnection:Disconnect()
+            particleConnection = nil
+        end
+        ScreenGui:Destroy()
     end)
 
     makeDraggable(TopSearchBar, MainFrame)
@@ -744,6 +661,7 @@ function Library:CreateWindow(config)
     ContentScroll.VerticalScrollBarInset = Enum.ScrollBarInset.None
     ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     ContentScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    ContentScroll.Active = true
     ContentScroll.Parent = MainFrame
 
     local ContentPadding = Instance.new("UIPadding")
@@ -802,6 +720,7 @@ function Library:CreateWindow(config)
         SectionCard.BackgroundColor3 = Library.Theme.CardBg
         SectionCard.BorderSizePixel = 0
         SectionCard.ClipsDescendants = false
+        SectionCard.Active = true
         SectionCard.Parent = targetColumn
 
         local CardCorner = Instance.new("UICorner")
