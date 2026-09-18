@@ -363,17 +363,64 @@ function Library:CreateWindow(config)
     Topbar.Active = true
     Topbar.Parent = MainFrame
 
+    local targetUsername = (LocalPlayer and LocalPlayer.Name) or "User"
+    local isTitleHovered = false
+    local titleAnimThread = nil
+
+    local TitleHitbox = Instance.new("TextButton")
+    TitleHitbox.Name = "TitleInteractive"
+    TitleHitbox.Size = UDim2.new(0, 240, 0, 18)
+    TitleHitbox.Position = UDim2.new(0, 16, 0, 9)
+    TitleHitbox.BackgroundTransparency = 1
+    TitleHitbox.Text = ""
+    TitleHitbox.AutoButtonColor = false
+    TitleHitbox.Parent = Topbar
+
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Name = "Title"
-    TitleLabel.Size = UDim2.new(0, 200, 0, 18)
-    TitleLabel.Position = UDim2.new(0, 16, 0, 9)
+    TitleLabel.Size = UDim2.new(1, 0, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 0, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.Text = windowTitle
     TitleLabel.TextColor3 = Library.Theme.TextWhite
     TitleLabel.TextSize = 14
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Parent = Topbar
+    TitleLabel.Parent = TitleHitbox
+
+    local function animateTitleText(toText)
+        if titleAnimThread then
+            task.cancel(titleAnimThread)
+            titleAnimThread = nil
+        end
+        titleAnimThread = task.spawn(function()
+            local chars = "!@#$%&*?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+            local len = #toText
+            local steps = 10
+            for i = 1, steps do
+                local progress = i / steps
+                local revealed = math.floor(progress * len)
+                local str = string.sub(toText, 1, revealed)
+                for _ = revealed + 1, len do
+                    local r = math.random(1, #chars)
+                    str = str .. string.sub(chars, r, r)
+                end
+                TitleLabel.Text = str
+                task.wait(0.02)
+            end
+            TitleLabel.Text = toText
+        end)
+    end
+
+    TitleHitbox.MouseEnter:Connect(function()
+        isTitleHovered = true
+        animateTitleText(targetUsername)
+    end)
+
+    TitleHitbox.MouseLeave:Connect(function()
+        isTitleHovered = false
+        animateTitleText(windowTitle)
+    end)
 
     local SubtitleLabel = Instance.new("TextLabel")
     SubtitleLabel.Name = "Subtitle"
@@ -388,6 +435,7 @@ function Library:CreateWindow(config)
     SubtitleLabel.Parent = Topbar
 
     makeDraggable(Topbar, MainFrame)
+    makeDraggable(TitleHitbox, MainFrame)
 
     local FooterBar = Instance.new("Frame")
     FooterBar.Name = "FooterBar"
@@ -653,8 +701,8 @@ function Library:CreateWindow(config)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
-    ContentScroll.Size = UDim2.new(1, -32, 1, -94)
-    ContentScroll.Position = UDim2.new(0, 16, 0, 48)
+    ContentScroll.Size = UDim2.new(1, -36, 1, -94)
+    ContentScroll.Position = UDim2.new(0, 18, 0, 48)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
     ContentScroll.ScrollBarThickness = 0
@@ -665,8 +713,10 @@ function Library:CreateWindow(config)
     ContentScroll.Parent = MainFrame
 
     local ContentPadding = Instance.new("UIPadding")
-    ContentPadding.PaddingTop = UDim.new(0, 4)
-    ContentPadding.PaddingBottom = UDim.new(0, 10)
+    ContentPadding.PaddingTop = UDim.new(0, 8)
+    ContentPadding.PaddingBottom = UDim.new(0, 16)
+    ContentPadding.PaddingLeft = UDim.new(0, 6)
+    ContentPadding.PaddingRight = UDim.new(0, 6)
     ContentPadding.Parent = ContentScroll
 
     local function buildSection(sectionConfig, optionalSide, leftCol, rightCol, tabObj)
@@ -1487,6 +1537,7 @@ function Library:CreateWindow(config)
         TabPage.Size = UDim2.new(1, 0, 0, 0)
         TabPage.AutomaticSize = Enum.AutomaticSize.Y
         TabPage.BackgroundTransparency = 1
+        TabPage.ClipsDescendants = false
         TabPage.Visible = false
         TabPage.Parent = ContentScroll
 
@@ -1496,6 +1547,7 @@ function Library:CreateWindow(config)
         LeftColumn.Position = UDim2.new(0, 0, 0, 0)
         LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
         LeftColumn.BackgroundTransparency = 1
+        LeftColumn.ClipsDescendants = false
         LeftColumn.Parent = TabPage
 
         local LeftLayout = Instance.new("UIListLayout")
@@ -1509,6 +1561,7 @@ function Library:CreateWindow(config)
         RightColumn.Position = UDim2.new(0.5, 6, 0, 0)
         RightColumn.AutomaticSize = Enum.AutomaticSize.Y
         RightColumn.BackgroundTransparency = 1
+        RightColumn.ClipsDescendants = false
         RightColumn.Parent = TabPage
 
         local RightLayout = Instance.new("UIListLayout")
