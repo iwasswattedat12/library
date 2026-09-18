@@ -1332,6 +1332,20 @@ function Library:CreateWindow(config)
                         pcall(callback, selected)
                     end
                 end,
+                Refresh = function(self, newOptions, newDefault)
+                    options = newOptions or {}
+                    OptionList.Size = UDim2.new(1, -12, 0, math.min(#options * 24, 140))
+                    OptionList.CanvasSize = UDim2.new(0, 0, 0, #options * 24)
+                    if newDefault ~= nil then
+                        self:Set(newDefault)
+                    else
+                        if not isMulti and not table.find(options, selected) then
+                            selected = options[1] or "Select..."
+                        end
+                        DrpLabel.Text = getDisplayTitle()
+                        rebuildOptions()
+                    end
+                end,
                 Value = function(self)
                     if isMulti then
                         return getSelectedList()
@@ -1373,6 +1387,7 @@ function Library:CreateWindow(config)
             InpLabel.TextColor3 = Library.Theme.TextNormal
             InpLabel.TextSize = 12
             InpLabel.TextXAlignment = Enum.TextXAlignment.Left
+            InpLabel.TextStrokeTransparency = 1
             InpLabel.Parent = InputFrame
 
             local TextBox = Instance.new("TextBox")
@@ -1384,7 +1399,9 @@ function Library:CreateWindow(config)
             TextBox.PlaceholderColor3 = Library.Theme.TextMuted
             TextBox.Text = default
             TextBox.TextColor3 = Library.Theme.TextWhite
+            TextBox.TextStrokeTransparency = 1
             TextBox.TextSize = 11
+            TextBox.ClearTextOnFocus = false
             TextBox.Parent = InputFrame
 
             local BoxCorner = Instance.new("UICorner")
@@ -1394,10 +1411,11 @@ function Library:CreateWindow(config)
             local BoxStroke = Instance.new("UIStroke")
             BoxStroke.Color = Library.Theme.BtnBorder
             BoxStroke.Thickness = 1
+            BoxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             BoxStroke.Parent = TextBox
 
             TextBox.Focused:Connect(function()
-                tween(BoxStroke, TweenInfo.new(0.15), { Color = Library.Theme.Accent })
+                tween(BoxStroke, TweenInfo.new(0.15), { Color = Library.Theme.CardBorder })
             end)
 
             TextBox.FocusLost:Connect(function(enterPressed)
@@ -1412,7 +1430,8 @@ function Library:CreateWindow(config)
                 end,
                 Value = function(self)
                     return TextBox.Text
-                end
+                end,
+                Instance = TextBox
             }
         end
 
