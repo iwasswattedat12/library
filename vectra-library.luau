@@ -482,29 +482,52 @@ function Library:CreateWindow(config)
     FootSubtitle.ZIndex = 22
     FootSubtitle.Parent = FooterBar
 
-    local discordLink = config.Discord or config.DiscordLink or "https://discord.gg/osintambition"
+    local discordLink = config.Discord or config.DiscordLink or "https://discord.gg/abub3nh7EW"
 
     local DiscordBtn = Instance.new("TextButton")
     DiscordBtn.Name = "DiscordBtn"
-    DiscordBtn.Size = UDim2.new(0, 84, 0, 24)
-    DiscordBtn.Position = UDim2.new(1, -100, 0.5, -12)
+    DiscordBtn.Size = UDim2.new(0, 32, 0, 28)
+    DiscordBtn.Position = UDim2.new(1, -48, 0.5, -14)
     DiscordBtn.BackgroundColor3 = Library.Theme.BtnBg
-    DiscordBtn.Text = "Discord"
-    DiscordBtn.Font = Enum.Font.GothamMedium
-    DiscordBtn.TextColor3 = Library.Theme.TextNormal
-    DiscordBtn.TextSize = 11
+    DiscordBtn.BackgroundTransparency = 0.4
+    DiscordBtn.Text = ""
     DiscordBtn.AutoButtonColor = false
     DiscordBtn.ZIndex = 23
     DiscordBtn.Parent = FooterBar
 
     local DiscordCorner = Instance.new("UICorner")
-    DiscordCorner.CornerRadius = UDim.new(0, 5)
+    DiscordCorner.CornerRadius = UDim.new(0, 6)
     DiscordCorner.Parent = DiscordBtn
 
     local DiscordStroke = Instance.new("UIStroke")
     DiscordStroke.Color = Library.Theme.BtnBorder
     DiscordStroke.Thickness = 1
     DiscordStroke.Parent = DiscordBtn
+
+    -- Glowing aura layer behind icon
+    local DiscordGlow = Instance.new("ImageLabel")
+    DiscordGlow.Name = "Glow"
+    DiscordGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+    DiscordGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    DiscordGlow.Size = UDim2.new(0, 26, 0, 26)
+    DiscordGlow.BackgroundTransparency = 1
+    DiscordGlow.Image = "rbxassetid://6034509993"
+    DiscordGlow.ImageColor3 = Color3.fromRGB(88, 101, 242)
+    DiscordGlow.ImageTransparency = 1
+    DiscordGlow.ZIndex = 23
+    DiscordGlow.Parent = DiscordBtn
+
+    -- Sharp front icon
+    local DiscordIcon = Instance.new("ImageLabel")
+    DiscordIcon.Name = "Icon"
+    DiscordIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    DiscordIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    DiscordIcon.Size = UDim2.new(0, 18, 0, 18)
+    DiscordIcon.BackgroundTransparency = 1
+    DiscordIcon.Image = "rbxassetid://6034509993"
+    DiscordIcon.ImageColor3 = Library.Theme.TextMuted
+    DiscordIcon.ZIndex = 24
+    DiscordIcon.Parent = DiscordBtn
 
     local function copyToClipboard(text)
         pcall(function()
@@ -519,26 +542,48 @@ function Library:CreateWindow(config)
     end
 
     DiscordBtn.MouseEnter:Connect(function()
-        tween(DiscordBtn, TweenInfo.new(0.12), {
-            BackgroundColor3 = Color3.fromRGB(88, 101, 242),
-            TextColor3 = Color3.fromRGB(255, 255, 255)
+        tween(DiscordBtn, TweenInfo.new(0.18), {
+            BackgroundColor3 = Color3.fromRGB(24, 26, 38),
+            BackgroundTransparency = 0.2
         })
-        tween(DiscordStroke, TweenInfo.new(0.12), { Color = Color3.fromRGB(88, 101, 242) })
+        tween(DiscordStroke, TweenInfo.new(0.18), {
+            Color = Color3.fromRGB(88, 101, 242)
+        })
+        tween(DiscordIcon, TweenInfo.new(0.18), {
+            ImageColor3 = Color3.fromRGB(114, 137, 255),
+            Size = UDim2.new(0, 19, 0, 19)
+        })
+        -- Icon glow activation
+        tween(DiscordGlow, TweenInfo.new(0.18), {
+            ImageTransparency = 0.35,
+            Size = UDim2.new(0, 28, 0, 28)
+        })
     end)
 
     DiscordBtn.MouseLeave:Connect(function()
-        tween(DiscordBtn, TweenInfo.new(0.12), {
+        tween(DiscordBtn, TweenInfo.new(0.18), {
             BackgroundColor3 = Library.Theme.BtnBg,
-            TextColor3 = Library.Theme.TextNormal
+            BackgroundTransparency = 0.4
         })
-        tween(DiscordStroke, TweenInfo.new(0.12), { Color = Library.Theme.BtnBorder })
+        tween(DiscordStroke, TweenInfo.new(0.18), {
+            Color = Library.Theme.BtnBorder
+        })
+        tween(DiscordIcon, TweenInfo.new(0.18), {
+            ImageColor3 = Library.Theme.TextMuted,
+            Size = UDim2.new(0, 18, 0, 18)
+        })
+        -- Fade glow away
+        tween(DiscordGlow, TweenInfo.new(0.18), {
+            ImageTransparency = 1,
+            Size = UDim2.new(0, 24, 0, 24)
+        })
     end)
 
     DiscordBtn.MouseButton1Click:Connect(function()
         copyToClipboard(discordLink)
         Library:Notify({
             Title = "Discord",
-            Content = "Copied Discord link to clipboard!",
+            Content = "Copied Discord invite to clipboard!",
             Duration = 2.5
         })
     end)
@@ -762,23 +807,17 @@ function Library:CreateWindow(config)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
-    ContentScroll.Size = UDim2.new(1, -36, 1, -94)
-    ContentScroll.Position = UDim2.new(0, 18, 0, 48)
+    ContentScroll.Size = UDim2.new(1, -32, 1, -94)
+    ContentScroll.Position = UDim2.new(0, 16, 0, 48)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
     ContentScroll.ScrollBarThickness = 0
     ContentScroll.VerticalScrollBarInset = Enum.ScrollBarInset.None
     ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     ContentScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    ContentScroll.ClipsDescendants = true
     ContentScroll.Active = true
     ContentScroll.Parent = MainFrame
-
-    local ContentPadding = Instance.new("UIPadding")
-    ContentPadding.PaddingTop = UDim.new(0, 8)
-    ContentPadding.PaddingBottom = UDim.new(0, 16)
-    ContentPadding.PaddingLeft = UDim.new(0, 6)
-    ContentPadding.PaddingRight = UDim.new(0, 6)
-    ContentPadding.Parent = ContentScroll
 
     local function buildSection(sectionConfig, optionalSide, leftCol, rightCol, tabObj)
         local sectionName = "Section"
@@ -1602,10 +1641,21 @@ function Library:CreateWindow(config)
         TabPage.Visible = false
         TabPage.Parent = ContentScroll
 
+        local TabPagePadding = Instance.new("UIPadding")
+        TabPagePadding.PaddingTop = UDim.new(0, 4)
+        TabPagePadding.PaddingBottom = UDim.new(0, 16)
+        TabPagePadding.Parent = TabPage
+
+        local TabPageLayout = Instance.new("UIListLayout")
+        TabPageLayout.FillDirection = Enum.FillDirection.Horizontal
+        TabPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        TabPageLayout.Padding = UDim.new(0, 10)
+        TabPageLayout.Parent = TabPage
+
         local LeftColumn = Instance.new("Frame")
         LeftColumn.Name = "LeftColumn"
-        LeftColumn.Size = UDim2.new(0.5, -6, 0, 0)
-        LeftColumn.Position = UDim2.new(0, 0, 0, 0)
+        LeftColumn.LayoutOrder = 1
+        LeftColumn.Size = UDim2.new(0.5, -5, 0, 0)
         LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
         LeftColumn.BackgroundTransparency = 1
         LeftColumn.ClipsDescendants = false
@@ -1618,8 +1668,8 @@ function Library:CreateWindow(config)
 
         local RightColumn = Instance.new("Frame")
         RightColumn.Name = "RightColumn"
-        RightColumn.Size = UDim2.new(0.5, -6, 0, 0)
-        RightColumn.Position = UDim2.new(0.5, 6, 0, 0)
+        RightColumn.LayoutOrder = 2
+        RightColumn.Size = UDim2.new(0.5, -5, 0, 0)
         RightColumn.AutomaticSize = Enum.AutomaticSize.Y
         RightColumn.BackgroundTransparency = 1
         RightColumn.ClipsDescendants = false
