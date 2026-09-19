@@ -711,8 +711,9 @@ function Library:CreateWindow(config)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
-    ContentScroll.Size = UDim2.new(1, -52, 1, -108)
-    ContentScroll.Position = UDim2.new(0, 26, 0, 54)
+    ContentScroll.AnchorPoint = Vector2.new(0.5, 0)
+    ContentScroll.Size = UDim2.new(1, -96, 1, -112)
+    ContentScroll.Position = UDim2.new(0.5, 0, 0, 56)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
     ContentScroll.ScrollBarThickness = 0
@@ -1644,20 +1645,20 @@ function Library:CreateWindow(config)
         TabPage.Parent = ContentScroll
 
         local TabPagePadding = Instance.new("UIPadding")
-        TabPagePadding.PaddingTop = UDim.new(0, 2)
-        TabPagePadding.PaddingBottom = UDim.new(0, 12)
+        TabPagePadding.PaddingTop = UDim.new(0, 4)
+        TabPagePadding.PaddingBottom = UDim.new(0, 14)
         TabPagePadding.Parent = TabPage
 
         local TabPageLayout = Instance.new("UIListLayout")
         TabPageLayout.FillDirection = Enum.FillDirection.Horizontal
         TabPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        TabPageLayout.Padding = UDim.new(0, 12)
+        TabPageLayout.Padding = UDim.new(0, 14)
         TabPageLayout.Parent = TabPage
 
         local LeftColumn = Instance.new("Frame")
         LeftColumn.Name = "LeftColumn"
         LeftColumn.LayoutOrder = 1
-        LeftColumn.Size = UDim2.new(0.5, -6, 0, 0)
+        LeftColumn.Size = UDim2.new(0.5, -7, 0, 0)
         LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
         LeftColumn.BackgroundTransparency = 1
         LeftColumn.ClipsDescendants = false
@@ -1671,7 +1672,7 @@ function Library:CreateWindow(config)
         local RightColumn = Instance.new("Frame")
         RightColumn.Name = "RightColumn"
         RightColumn.LayoutOrder = 2
-        RightColumn.Size = UDim2.new(0.5, -6, 0, 0)
+        RightColumn.Size = UDim2.new(0.5, -7, 0, 0)
         RightColumn.AutomaticSize = Enum.AutomaticSize.Y
         RightColumn.BackgroundTransparency = 1
         RightColumn.ClipsDescendants = false
