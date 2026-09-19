@@ -712,7 +712,7 @@ function Library:CreateWindow(config)
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
     ContentScroll.AnchorPoint = Vector2.new(0.5, 0)
-    ContentScroll.Size = UDim2.new(1, -96, 1, -112)
+    ContentScroll.Size = UDim2.new(1, -116, 1, -112)
     ContentScroll.Position = UDim2.new(0.5, 0, 0, 56)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
