@@ -711,9 +711,8 @@ function Library:CreateWindow(config)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
-    ContentScroll.AnchorPoint = Vector2.new(0.5, 0)
-    ContentScroll.Size = UDim2.new(1, -140, 1, -112)
-    ContentScroll.Position = UDim2.new(0.5, 0, 0, 56)
+    ContentScroll.Size = UDim2.new(1, -32, 1, -94)
+    ContentScroll.Position = UDim2.new(0, 16, 0, 48)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
     ContentScroll.ScrollBarThickness = 0
@@ -782,22 +781,16 @@ function Library:CreateWindow(config)
         CardCorner.CornerRadius = UDim.new(0, 8)
         CardCorner.Parent = SectionCard
 
-        local CardStroke = Instance.new("UIStroke")
-        CardStroke.Color = Library.Theme.CardBorder
-        CardStroke.Thickness = 1
-        CardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        CardStroke.Parent = SectionCard
-
         local CardPadding = Instance.new("UIPadding")
-        CardPadding.PaddingTop = UDim.new(0, 10)
-        CardPadding.PaddingBottom = UDim.new(0, 10)
-        CardPadding.PaddingLeft = UDim.new(0, 10)
-        CardPadding.PaddingRight = UDim.new(0, 10)
+        CardPadding.PaddingTop = UDim.new(0, 12)
+        CardPadding.PaddingBottom = UDim.new(0, 14)
+        CardPadding.PaddingLeft = UDim.new(0, 12)
+        CardPadding.PaddingRight = UDim.new(0, 12)
         CardPadding.Parent = SectionCard
 
         local CardLayout = Instance.new("UIListLayout")
         CardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        CardLayout.Padding = UDim.new(0, 7)
+        CardLayout.Padding = UDim.new(0, 9)
         CardLayout.Parent = SectionCard
 
         local HeaderTitle = Instance.new("TextLabel")
@@ -1646,19 +1639,19 @@ function Library:CreateWindow(config)
 
         local TabPagePadding = Instance.new("UIPadding")
         TabPagePadding.PaddingTop = UDim.new(0, 4)
-        TabPagePadding.PaddingBottom = UDim.new(0, 14)
+        TabPagePadding.PaddingBottom = UDim.new(0, 16)
         TabPagePadding.Parent = TabPage
 
         local TabPageLayout = Instance.new("UIListLayout")
         TabPageLayout.FillDirection = Enum.FillDirection.Horizontal
         TabPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        TabPageLayout.Padding = UDim.new(0, 14)
+        TabPageLayout.Padding = UDim.new(0, 10)
         TabPageLayout.Parent = TabPage
 
         local LeftColumn = Instance.new("Frame")
         LeftColumn.Name = "LeftColumn"
         LeftColumn.LayoutOrder = 1
-        LeftColumn.Size = UDim2.new(0.5, -7, 0, 0)
+        LeftColumn.Size = UDim2.new(0.5, -5, 0, 0)
         LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
         LeftColumn.BackgroundTransparency = 1
         LeftColumn.ClipsDescendants = false
@@ -1672,7 +1665,7 @@ function Library:CreateWindow(config)
         local RightColumn = Instance.new("Frame")
         RightColumn.Name = "RightColumn"
         RightColumn.LayoutOrder = 2
-        RightColumn.Size = UDim2.new(0.5, -7, 0, 0)
+        RightColumn.Size = UDim2.new(0.5, -5, 0, 0)
         RightColumn.AutomaticSize = Enum.AutomaticSize.Y
         RightColumn.BackgroundTransparency = 1
         RightColumn.ClipsDescendants = false
