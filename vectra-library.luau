@@ -781,6 +781,12 @@ function Library:CreateWindow(config)
         CardCorner.CornerRadius = UDim.new(0, 8)
         CardCorner.Parent = SectionCard
 
+        local CardStroke = Instance.new("UIStroke")
+        CardStroke.Color = Library.Theme.CardBorder
+        CardStroke.Thickness = 1
+        CardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        CardStroke.Parent = SectionCard
+
         local CardPadding = Instance.new("UIPadding")
         CardPadding.PaddingTop = UDim.new(0, 12)
         CardPadding.PaddingBottom = UDim.new(0, 14)
