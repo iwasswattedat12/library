@@ -712,7 +712,7 @@ function Library:CreateWindow(config)
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
     ContentScroll.AnchorPoint = Vector2.new(0.5, 0)
-    ContentScroll.Size = UDim2.new(1, -116, 1, -112)
+    ContentScroll.Size = UDim2.new(1, -140, 1, -112)
     ContentScroll.Position = UDim2.new(0.5, 0, 0, 56)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
@@ -789,15 +789,15 @@ function Library:CreateWindow(config)
         CardStroke.Parent = SectionCard
 
         local CardPadding = Instance.new("UIPadding")
-        CardPadding.PaddingTop = UDim.new(0, 12)
-        CardPadding.PaddingBottom = UDim.new(0, 14)
-        CardPadding.PaddingLeft = UDim.new(0, 12)
-        CardPadding.PaddingRight = UDim.new(0, 12)
+        CardPadding.PaddingTop = UDim.new(0, 10)
+        CardPadding.PaddingBottom = UDim.new(0, 10)
+        CardPadding.PaddingLeft = UDim.new(0, 10)
+        CardPadding.PaddingRight = UDim.new(0, 10)
         CardPadding.Parent = SectionCard
 
         local CardLayout = Instance.new("UIListLayout")
         CardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        CardLayout.Padding = UDim.new(0, 9)
+        CardLayout.Padding = UDim.new(0, 7)
         CardLayout.Parent = SectionCard
 
         local HeaderTitle = Instance.new("TextLabel")
