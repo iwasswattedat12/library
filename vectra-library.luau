@@ -711,8 +711,8 @@ function Library:CreateWindow(config)
 
     local ContentScroll = Instance.new("ScrollingFrame")
     ContentScroll.Name = "ContentScroll"
-    ContentScroll.Size = UDim2.new(1, -52, 1, -108)
-    ContentScroll.Position = UDim2.new(0, 26, 0, 54)
+    ContentScroll.Size = UDim2.new(1, -24, 1, -98)
+    ContentScroll.Position = UDim2.new(0, 12, 0, 50)
     ContentScroll.BackgroundTransparency = 1
     ContentScroll.BorderSizePixel = 0
     ContentScroll.ScrollBarThickness = 0
@@ -780,12 +780,6 @@ function Library:CreateWindow(config)
         local CardCorner = Instance.new("UICorner")
         CardCorner.CornerRadius = UDim.new(0, 8)
         CardCorner.Parent = SectionCard
-
-        local CardStroke = Instance.new("UIStroke")
-        CardStroke.Color = Library.Theme.CardBorder
-        CardStroke.Thickness = 1
-        CardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        CardStroke.Parent = SectionCard
 
         local CardPadding = Instance.new("UIPadding")
         CardPadding.PaddingTop = UDim.new(0, 12)
@@ -1577,11 +1571,6 @@ function Library:CreateWindow(config)
             ParaCorner.CornerRadius = UDim.new(0, 5)
             ParaCorner.Parent = ParaFrame
 
-            local ParaStroke = Instance.new("UIStroke")
-            ParaStroke.Color = Library.Theme.BtnBorder
-            ParaStroke.Thickness = 1
-            ParaStroke.Parent = ParaFrame
-
             local ParaPad = Instance.new("UIPadding")
             ParaPad.PaddingTop = UDim.new(0, 8)
             ParaPad.PaddingBottom = UDim.new(0, 8)
@@ -1651,13 +1640,13 @@ function Library:CreateWindow(config)
         local TabPageLayout = Instance.new("UIListLayout")
         TabPageLayout.FillDirection = Enum.FillDirection.Horizontal
         TabPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        TabPageLayout.Padding = UDim.new(0, 12)
+        TabPageLayout.Padding = UDim.new(0, 8)
         TabPageLayout.Parent = TabPage
 
         local LeftColumn = Instance.new("Frame")
         LeftColumn.Name = "LeftColumn"
         LeftColumn.LayoutOrder = 1
-        LeftColumn.Size = UDim2.new(0.5, -6, 0, 0)
+        LeftColumn.Size = UDim2.new(0.5, -4, 0, 0)
         LeftColumn.AutomaticSize = Enum.AutomaticSize.Y
         LeftColumn.BackgroundTransparency = 1
         LeftColumn.ClipsDescendants = false
@@ -1665,13 +1654,13 @@ function Library:CreateWindow(config)
 
         local LeftLayout = Instance.new("UIListLayout")
         LeftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        LeftLayout.Padding = UDim.new(0, 10)
+        LeftLayout.Padding = UDim.new(0, 8)
         LeftLayout.Parent = LeftColumn
 
         local RightColumn = Instance.new("Frame")
         RightColumn.Name = "RightColumn"
         RightColumn.LayoutOrder = 2
-        RightColumn.Size = UDim2.new(0.5, -6, 0, 0)
+        RightColumn.Size = UDim2.new(0.5, -4, 0, 0)
         RightColumn.AutomaticSize = Enum.AutomaticSize.Y
         RightColumn.BackgroundTransparency = 1
         RightColumn.ClipsDescendants = false
@@ -1679,7 +1668,7 @@ function Library:CreateWindow(config)
 
         local RightLayout = Instance.new("UIListLayout")
         RightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        RightLayout.Padding = UDim.new(0, 10)
+        RightLayout.Padding = UDim.new(0, 8)
         RightLayout.Parent = RightColumn
 
         local TabBtn = Instance.new("TextButton")
